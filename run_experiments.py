@@ -417,6 +417,139 @@ class HybridRealQ_v2(nn.Module):
         return self.fusion(combined)
 
 
+# 4c. Advanced Quantum Circuit (v3): trainable encoding, Pauli correlators, residual
+@qml.qnode(dev, interface="torch")
+def quantum_circuit_v3(inputs, input_scales, input_biases, weights_ry, weights_rz):
+    """3-layer VQC with trainable input scaling, data re-uploading, RY+RZ rotations,
+    shifted-ring entanglement, single-qubit AND 2-qubit correlator measurements."""
+    n_layers = 3
+    for layer in range(n_layers):
+        for i in range(n_qubits):
+            qml.RY(input_scales[i] * inputs[i] + input_biases[i], wires=i)
+        for i in range(n_qubits):
+            qml.RY(weights_ry[layer][i], wires=i)
+            qml.RZ(weights_rz[layer][i], wires=i)
+        shift = layer + 1
+        for i in range(n_qubits):
+            qml.CNOT(wires=[i, (i + shift) % n_qubits])
+    # Single-qubit Z measurements (7)
+    single = [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]
+    # Adjacent 2-qubit ZZ correlators (7)
+    corr = [qml.expval(qml.PauliZ(i) @ qml.PauliZ((i + 1) % n_qubits))
+            for i in range(n_qubits)]
+    return tuple(single + corr)
+
+
+class HybridRealQ_v3(nn.Module):
+    """v3 hybrid model improvements over v2:
+    1. Trainable input scaling (alpha*x + beta) instead of fixed pi*x
+    2. Multi-qubit ZZ correlator measurements (7 single + 7 pair = 14D quantum embedding)
+    3. Residual connection: fusion sees quantum + encoded classical + raw classical
+    4. Designed for mini-batch training on full dataset
+    """
+    def __init__(self, n_classical_features):
+        super().__init__()
+        # Trainable input scaling
+        self.input_scales = nn.Parameter(torch.ones(n_qubits) * np.pi)
+        self.input_biases = nn.Parameter(torch.zeros(n_qubits))
+        # Quantum variational params
+        self.q_params_ry = nn.Parameter(torch.randn(3, n_qubits) * 0.1)
+        self.q_params_rz = nn.Parameter(torch.randn(3, n_qubits) * 0.1)
+        # Classical encoder
+        self.classical_encoder = nn.Sequential(
+            nn.Linear(n_classical_features, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+        )
+        # Fusion: 14 (quantum) + 32 (encoded classical) + n (raw classical residual)
+        fusion_in = 14 + 32 + n_classical_features
+        self.fusion = nn.Sequential(
+            nn.Linear(fusion_in, 128),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1),
+        )
+
+    def forward(self, x_q, x_c):
+        x_q = x_q.to(torch.float32)
+        x_c = x_c.to(torch.float32)
+        batch_size = x_q.shape[0]
+        q_out = []
+        for i in range(batch_size):
+            res = quantum_circuit_v3(x_q[i], self.input_scales, self.input_biases,
+                                     self.q_params_ry, self.q_params_rz)
+            q_out.append(torch.stack(list(res)))
+        q_out = torch.stack(q_out).to(torch.float32)  # (batch, 14)
+        c_encoded = self.classical_encoder(x_c)         # (batch, 32)
+        # Residual: raw classical features skip the encoder
+        combined = torch.cat([q_out, c_encoded, x_c], dim=1)
+        return self.fusion(combined)
+
+
+def train_model_minibatch(model, X_q, X_c, y, X_q_val, X_c_val, y_val,
+                          epochs=30, lr=0.001, batch_size=128,
+                          use_scheduler=True, time_budget=None, verbose=True):
+    """Mini-batch training for full-dataset training with quantum models."""
+    criterion = nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    scheduler = None
+    if use_scheduler:
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=epochs, eta_min=1e-5)
+    n_samples = len(X_q)
+    history = {'train_loss': [], 'val_loss': [], 'epoch_time': [], 'lr': []}
+    hw_info = log_hardware_info()
+    if verbose:
+        print(f"  Hardware: {hw_info['device']} | Batch size: {batch_size} | Samples: {n_samples}")
+    total_start = time.time()
+    for epoch in range(epochs):
+        if time_budget and (time.time() - total_start) > time_budget:
+            if verbose:
+                print(f"  Time budget ({time_budget}s) reached at epoch {epoch}. Stopping.")
+            break
+        epoch_start = time.time()
+        model.train()
+        perm = torch.randperm(n_samples)
+        epoch_loss = 0.0
+        n_batches = 0
+        for start_idx in range(0, n_samples, batch_size):
+            idx = perm[start_idx:start_idx + batch_size]
+            optimizer.zero_grad()
+            logits = model(X_q[idx], X_c[idx]).squeeze()
+            loss = criterion(logits, y[idx].squeeze())
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+            n_batches += 1
+        if scheduler:
+            scheduler.step()
+        avg_loss = epoch_loss / n_batches
+        model.eval()
+        with torch.no_grad():
+            val_logits = model(X_q_val, X_c_val).squeeze()
+            val_loss = criterion(val_logits, y_val.squeeze()).item()
+        epoch_time = time.time() - epoch_start
+        history['train_loss'].append(avg_loss)
+        history['val_loss'].append(val_loss)
+        history['epoch_time'].append(epoch_time)
+        history['lr'].append(optimizer.param_groups[0]['lr'])
+        if verbose and (epoch + 1) % 5 == 0:
+            cur_lr = optimizer.param_groups[0]['lr']
+            print(f"  Epoch {epoch+1:02d} | Loss: {avg_loss:.4f} | Val: {val_loss:.4f} | LR: {cur_lr:.6f} | Time: {epoch_time:.1f}s")
+    total_time = time.time() - total_start
+    history['total_time'] = total_time
+    history['hardware'] = hw_info
+    if verbose:
+        print(f"  Total: {total_time:.1f}s ({total_time/60:.1f}m)")
+    return history
+
+
 # 5. Hardware Logging + Training
 def log_hardware_info():
     info = {"platform": platform.platform(), "torch_version": torch.__version__}
@@ -672,6 +805,58 @@ ablation.append({'Model': 'HybridRealQ_v2 (fair)', 'AUC': round(v2_fair_metrics[
                  'F1': round(v2_fair_metrics['f1'], 4),
                  'Time_sec': round(fair_total, 1), 'Status': 'OK'})
 
+# 8d. HybridRealQ_v3 trained on FULL dataset with mini-batching
+print("\nRunning HybridRealQ_v3 (full dataset, mini-batch)...")
+set_determinism(42)
+gc.collect()
+v3_model = HybridRealQ_v3(n_classical)
+# Use full dataset (not subsampled) for v3
+v3_start = time.time()
+v3_history = train_model_minibatch(
+    v3_model, X_train_q, X_train_classical, y_train_torch,
+    X_test_q_sub, X_test_c_sub, y_test_sub,
+    epochs=30, lr=0.001, batch_size=256,
+    use_scheduler=True, time_budget=600
+)
+v3_metrics = evaluate_model(v3_model, X_test_q_sub, X_test_c_sub, y_test_sub.numpy())
+v3_time = time.time() - v3_start
+print(f"  HybridRealQ_v3: AUC={v3_metrics['auc']:.4f} Prec={v3_metrics['precision']:.4f} "
+      f"Rec={v3_metrics['recall']:.4f} F1={v3_metrics['f1']:.4f} Time={v3_time:.1f}s")
+ablation.append({'Model': 'HybridRealQ_v3 (full data)', 'AUC': round(v3_metrics['auc'], 4),
+                 'Precision': round(v3_metrics['precision'], 4),
+                 'Recall': round(v3_metrics['recall'], 4),
+                 'F1': round(v3_metrics['f1'], 4),
+                 'Time_sec': round(v3_time, 1), 'Status': 'OK'})
+
+# 8e. Ensemble: v3 + Classical MLP probability averaging
+print("\nRunning Ensemble (v3 + Classical MLP)...")
+set_determinism(42)
+ensemble_mlp = ClassicalMLP(n_classical)
+train_model(ensemble_mlp, train_data, test_data, verbose=False)
+
+# Average probabilities from both models
+v3_model.eval()
+ensemble_mlp.eval()
+with torch.no_grad():
+    logits_v3 = v3_model(X_test_q_sub, X_test_c_sub).squeeze()
+    probs_v3 = torch.sigmoid(logits_v3).cpu().numpy()
+    logits_mlp = ensemble_mlp(X_test_q_sub, X_test_c_sub).squeeze()
+    probs_mlp_ens = torch.sigmoid(logits_mlp).cpu().numpy()
+
+probs_ensemble = (probs_v3 + probs_mlp_ens) / 2.0
+y_ens_np = y_test_sub.numpy().ravel()
+ens_auc = roc_auc_score(y_ens_np, probs_ensemble)
+fpr_e, tpr_e, thr_e = roc_curve(y_ens_np, probs_ensemble)
+ens_thresh = thr_e[(tpr_e - fpr_e).argmax()]
+ens_preds = (probs_ensemble >= ens_thresh).astype(int)
+ens_prec = precision_score(y_ens_np, ens_preds, zero_division=0)
+ens_rec = recall_score(y_ens_np, ens_preds, zero_division=0)
+ens_f1 = f1_score(y_ens_np, ens_preds, zero_division=0)
+print(f"  Ensemble: AUC={ens_auc:.4f} Prec={ens_prec:.4f} Rec={ens_rec:.4f} F1={ens_f1:.4f}")
+ablation.append({'Model': 'Ensemble (v3 + MLP)', 'AUC': round(ens_auc, 4),
+                 'Precision': round(ens_prec, 4), 'Recall': round(ens_rec, 4),
+                 'F1': round(ens_f1, 4), 'Time_sec': round(v3_time, 1), 'Status': 'OK'})
+
 # 9. Gradient Boosting Baselines
 print("\n" + "=" * 60)
 print("  GRADIENT BOOSTING BASELINES")
@@ -852,6 +1037,7 @@ def quick_fairness_audit(model_to_audit, model_name, threshold_override=None):
 
 v2_fairness, v2_gaps = quick_fairness_audit(v2_model, "HybridRealQ_v2")
 v2f_fairness, v2f_gaps = quick_fairness_audit(v2_fair_model, "HybridRealQ_v2 (fair)")
+v3_fairness, v3_gaps = quick_fairness_audit(v3_model, "HybridRealQ_v3")
 
 # 11. Save All Results
 print("\n" + "=" * 60)
