@@ -1,6 +1,6 @@
 \documentclass[12pt, letterpaper]{article}
 
-% --- Packages ---
+%  Packages 
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
@@ -21,7 +21,7 @@
     urlcolor=blue
 }
 
-% --- Header/Footer ---
+%  Header/Footer 
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{Meharry Medical College}
@@ -32,7 +32,7 @@
 \titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.5em}{}
 
-% --- Title ---
+%  Title 
 \title{
     \textbf{Hybrid Quantum-Classical Neural Networks for Personalized Survival Prediction in Triple-Negative Breast Cancer: A Fairness-Aware, Agentic Modeling Framework}
 }
@@ -219,20 +219,20 @@ Asian/Pacific Islander*         & 39  & 0.5899 & 0.3889 & 0.1905 & 0.2821 \\
 \end{table}
 
 \subsection{Data Leakage Audit}
-The automated leakage audit confirmed no residual data leakage after preprocessing. All three checks---per-feature AUC scan (threshold 0.95), feature-target correlation screening (threshold 0.90), and train/test distribution shift (KS test, $p < 0.001$)---passed without flags.
+The automated leakage audit confirmed no residual data leakage after preprocessing. All three checksper-feature AUC scan (threshold 0.95), feature-target correlation screening (threshold 0.90), and train/test distribution shift (KS test, $p < 0.001$)passed without flags.
 
 
 \section{Discussion}
 
 The ablation study results provide insight into the relative contributions of the quantum and classical pathways. The full HybridRealQ model (AUC 0.7037) underperformed the classical MLP baseline (AUC 0.7942), indicating that in this configuration, the quantum pathway did not provide a clear predictive advantage. This is attributable to the architectural bottleneck: the quantum circuit compresses 7 input features into a single scalar ($\langle Z_0 \rangle$), discarding information encoded in qubits 1--6. The deeper 2-layer variant (AUC 0.7899) nearly matched the classical MLP, suggesting that additional variational depth partially compensates for this bottleneck. Future work should explore multi-qubit measurement and data re-uploading strategies to improve quantum feature utilization.
 
-Notably, the quantum-only model achieved AUC 0.7942 with very high recall (0.9837), indicating that the quantum pathway learned a near-constant positive prediction strategy---an artifact of class imbalance rather than genuine discriminative power.
+Notably, the quantum-only model achieved AUC 0.7942 with very high recall (0.9837), indicating that the quantum pathway learned a near-constant positive prediction strategyan artifact of class imbalance rather than genuine discriminative power.
 
 The gradient boosting baselines substantially outperformed all neural architectures. XGBoost achieved the highest AUC (0.9051) and LightGBM the highest F1 (0.8141), both with training times under 2 seconds. This result is consistent with the well-established finding that gradient boosted trees remain state-of-the-art for structured tabular data \citep{huang2022}. The hybrid model's 200-second training time per run, driven by per-sample quantum circuit evaluation, represents a significant practical disadvantage. These baselines set a high bar that quantum-classical hybrids must clear to justify their computational overhead.
 
-The fairness audit revealed substantial disparities across racial subgroups. The model performed best on White patients (AUC 0.7277, TPR 0.6423) and worst on Black patients (AUC 0.6982, TPR 0.0690). The TPR gap of 0.5734 between the highest and lowest subgroups is clinically concerning: Black patients---who disproportionately develop TNBC---received correct positive predictions at only 6.9\% compared to 64.2\% for White patients. The Demographic Parity Difference of 0.2794 further confirms that the model's positive prediction rate varies significantly across racial groups. The American Indian/Alaska Native and Hispanic/Other subgroups were excluded due to insufficient test samples ($n < 20$), and the Asian/Pacific Islander subgroup ($n = 39$) should be interpreted with caution.
+The fairness audit revealed substantial disparities across racial subgroups. The model performed best on White patients (AUC 0.7277, TPR 0.6423) and worst on Black patients (AUC 0.6982, TPR 0.0690). The TPR gap of 0.5734 between the highest and lowest subgroups is clinically concerning: Black patientswho disproportionately develop TNBCreceived correct positive predictions at only 6.9\% compared to 64.2\% for White patients. The Demographic Parity Difference of 0.2794 further confirms that the model's positive prediction rate varies significantly across racial groups. The American Indian/Alaska Native and Hispanic/Other subgroups were excluded due to insufficient test samples ($n < 20$), and the Asian/Pacific Islander subgroup ($n = 39$) should be interpreted with caution.
 
-Compared to the AUC range of 0.85--0.92 reported in prior SEER-based TNBC survival studies \citep{huang2022, qiu2024}, our gradient boosting baselines (AUC 0.90--0.91) fall within the expected range, while the hybrid quantum-classical model falls below. However, this project contributes a fairness-aware evaluation framework and demonstrates how quantum-classical architectures can be systematically benchmarked against classical alternatives---an approach rarely taken in quantum ML literature.
+Compared to the AUC range of 0.85--0.92 reported in prior SEER-based TNBC survival studies \citep{huang2022, qiu2024}, our gradient boosting baselines (AUC 0.90--0.91) fall within the expected range, while the hybrid quantum-classical model falls below. However, this project contributes a fairness-aware evaluation framework and demonstrates how quantum-classical architectures can be systematically benchmarked against classical alternativesan approach rarely taken in quantum ML literature.
 
 
 \section{Limitations}
