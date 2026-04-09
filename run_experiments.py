@@ -82,9 +82,15 @@ df['stage_cleaned'] = df['Summary_stage_2000_1998_2017_'].map(stage_map)
 col_ttt = 'Time_from_diagnosis_to_treatment_in_days_recode'
 df[col_ttt] = pd.to_numeric(df[col_ttt], errors='coerce').fillna(0)
 
-# Tumor size
+# Tumor size: backfill from CS_tumor_size_2004_2015_ then fill remaining with median
 col_tumor = 'Tumor_Size_Summary_2016_'
 df[col_tumor] = pd.to_numeric(df[col_tumor], errors='coerce')
+if 'CS_tumor_size_2004_2015_' in df.columns:
+    cs_tumor = pd.to_numeric(df['CS_tumor_size_2004_2015_'], errors='coerce')
+    df[col_tumor] = df[col_tumor].fillna(cs_tumor)
+tumor_median = df[col_tumor].median()
+df[col_tumor] = df[col_tumor].fillna(tumor_median)
+print(f"  Tumor size: backfilled from CS column, remaining filled with median={tumor_median}")
 
 # Laterality
 laterality_map = {
@@ -121,10 +127,12 @@ classical_features = [col for col in df.columns
 
 df_clean = df.dropna(subset=quantum_features + [target_col])
 
-# Fill remaining NaN in classical features with column median
+# Fill remaining NaN in classical features with column median (or 0 if all NaN)
 for col in classical_features:
     if df_clean[col].isna().any():
         median_val = df_clean[col].median()
+        if pd.isna(median_val):
+            median_val = 0.0
         n_filled = df_clean[col].isna().sum()
         df_clean[col] = df_clean[col].fillna(median_val)
         print(f"  Filled {n_filled} NaN in {col} with median={median_val:.2f}")
