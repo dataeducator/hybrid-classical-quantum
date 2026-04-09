@@ -1,0 +1,8 @@
+Model,AUC,Precision,Recall,F1,Time_sec,Status
+HybridRealQ (7-qubit),0.7037,0.6299,0.5272,0.574,200.1,OK
+Classical MLP,0.7942,0.5821,0.8478,0.6903,0.0,OK
+Quantum Only,0.7942,0.5839,0.9837,0.7328,194.5,OK
+Hybrid (3-qubit),0.7271,0.5087,0.7935,0.62,121.9,OK
+Hybrid (Deep 2-layer),0.7899,0.6526,0.7554,0.7003,293.0,OK
+XGBoost,0.9051,0.6885,0.9728,0.8063,0.2,OK
+LightGBM,0.9006,0.7178,0.9402,0.8141,1.6,OK

@@ -1,0 +1,43 @@
+# Data (real patient data - do not commit)
+tnbc.csv
+breast_cancer_4quantum.csv
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Environment
+.env
+.venv/
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.synctex.gz
+*.out
+*.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/

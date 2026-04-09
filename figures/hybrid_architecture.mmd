@@ -1,0 +1,44 @@
+graph TD
+    subgraph Input["Input Features"]
+        QF["Quantum Features (7D)<br/><small>stage, grade, age, treatment, ...</small>"]
+        CF["Classical Features (nD)<br/><small>race, income, marital, subtype, ...</small>"]
+    end
+
+    subgraph Quantum["Quantum Pathway (7-qubit VQC)"]
+        ENC["RY Angle Encoding<br/><small>RY(pi * x_i) on qubit i</small>"]
+        VAR["Variational RY Layer<br/><small>Trainable weights w_i</small>"]
+        ENT["Ring CNOT Entanglement<br/><small>CNOT(i, (i+1) mod 7)</small>"]
+        MEAS["Pauli-Z Measurement<br/><small>⟨Z₀⟩ → scalar</small>"]
+    end
+
+    subgraph Classical["Classical Pathway"]
+        SCALE["StandardScaler<br/><small>mean=0, std=1</small>"]
+    end
+
+    subgraph Fusion["Fusion MLP"]
+        CONCAT["Concatenate [scalar, classical] ∈ R^(1+n)"]
+        FC1["FC(1+n, 32) → ReLU"]
+        FC2["FC(32, 16) → ReLU"]
+        FC3["FC(16, 1) → Sigmoid"]
+    end
+
+    OUTPUT["Binary Survival Prediction<br/><small>Survived / Deceased</small>"]
+
+    QF --> ENC --> VAR --> ENT --> MEAS
+    CF --> SCALE
+    MEAS --> CONCAT
+    SCALE --> CONCAT
+    CONCAT --> FC1 --> FC2 --> FC3 --> OUTPUT
+
+    style QF fill:#6C1A42,color:#fff,stroke:#6C1A42
+    style ENC fill:#f5e6ee,stroke:#6C1A42
+    style VAR fill:#f5e6ee,stroke:#6C1A42
+    style ENT fill:#f5e6ee,stroke:#6C1A42
+    style MEAS fill:#f5e6ee,stroke:#6C1A42
+    style CF fill:#1A6C5E,color:#fff,stroke:#1A6C5E
+    style SCALE fill:#e6f2ef,stroke:#1A6C5E
+    style CONCAT fill:#fdf5e6,stroke:#C49A2A
+    style FC1 fill:#fdf5e6,stroke:#C49A2A
+    style FC2 fill:#fdf5e6,stroke:#C49A2A
+    style FC3 fill:#fdf5e6,stroke:#C49A2A
+    style OUTPUT fill:#e8eff5,stroke:#2C5F8A

@@ -1,0 +1,128 @@
+{
+  "main_model": {
+    "auc": 0.7037,
+    "precision": 0.6299,
+    "recall": 0.5272,
+    "f1": 0.574,
+    "threshold": "0.3998",
+    "total_training_time_sec": 200.1
+  },
+  "ablation": [
+    {
+      "Model": "HybridRealQ (7-qubit)",
+      "AUC": 0.7037,
+      "Precision": 0.6299,
+      "Recall": 0.5272,
+      "F1": 0.574,
+      "Time_sec": 200.1,
+      "Status": "OK"
+    },
+    {
+      "Model": "Classical MLP",
+      "AUC": 0.7942,
+      "Precision": 0.5821,
+      "Recall": 0.8478,
+      "F1": 0.6903,
+      "Time_sec": 0.0,
+      "Status": "OK"
+    },
+    {
+      "Model": "Quantum Only",
+      "AUC": 0.7942,
+      "Precision": 0.5839,
+      "Recall": 0.9837,
+      "F1": 0.7328,
+      "Time_sec": 194.5,
+      "Status": "OK"
+    },
+    {
+      "Model": "Hybrid (3-qubit)",
+      "AUC": 0.7271,
+      "Precision": 0.5087,
+      "Recall": 0.7935,
+      "F1": 0.62,
+      "Time_sec": 121.9,
+      "Status": "OK"
+    },
+    {
+      "Model": "Hybrid (Deep 2-layer)",
+      "AUC": 0.7899,
+      "Precision": 0.6526,
+      "Recall": 0.7554,
+      "F1": 0.7003,
+      "Time_sec": 293.0,
+      "Status": "OK"
+    },
+    {
+      "Model": "XGBoost",
+      "AUC": 0.9051,
+      "Precision": 0.6885,
+      "Recall": 0.9728,
+      "F1": 0.8063,
+      "Time_sec": 0.2,
+      "Status": "OK"
+    },
+    {
+      "Model": "LightGBM",
+      "AUC": 0.9006,
+      "Precision": 0.7178,
+      "Recall": 0.9402,
+      "F1": 0.8141,
+      "Time_sec": 1.6,
+      "Status": "OK"
+    }
+  ],
+  "fairness": {
+    "race_asian/pacific islander": {
+      "n": 39,
+      "accuracy": 0.6154,
+      "pos_rate": 0.2821,
+      "tpr": 0.3889,
+      "fpr": 0.1905,
+      "auc": 0.5899
+    },
+    "race_black": {
+      "n": 98,
+      "accuracy": 0.6531,
+      "pos_rate": 0.0918,
+      "tpr": 0.069,
+      "fpr": 0.1014,
+      "auc": 0.6982
+    },
+    "race_white": {
+      "n": 361,
+      "accuracy": 0.7368,
+      "pos_rate": 0.3712,
+      "tpr": 0.6423,
+      "fpr": 0.2054,
+      "auc": 0.7277
+    }
+  },
+  "fairness_gaps": {
+    "dp_diff": 0.2794,
+    "eo_tpr_diff": 0.5734,
+    "eo_fpr_diff": 0.1039
+  },
+  "leakage_audit": {
+    "auc_flags": 0,
+    "corr_flags": 0,
+    "ks_flags": 0,
+    "all_passed": true
+  },
+  "data": {
+    "total_rows": 60412,
+    "train_size": 2000,
+    "test_size": 500,
+    "n_quantum_features": 7,
+    "n_classical_features": 16
+  },
+  "hardware": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch_version": "2.10.0+cu128",
+    "device": "GPU",
+    "gpu_name": "NVIDIA GeForce RTX 5080",
+    "gpu_memory_gb": 17.09,
+    "cuda_version": "12.8",
+    "pennylane_version": "0.44.1"
+  }
+}

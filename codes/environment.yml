@@ -1,0 +1,37 @@
+name: tnbc
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - numpy>=1.26
+  - pyarrow>=15.0
+  # PyTorch from conda channel (avoids Windows DLL issues with pip)
+  - pytorch::pytorch>=2.2
+  - cpuonly
+  - pip
+  - pip:
+      # Data harmonization
+      - polars>=1.0
+      - duckdb>=0.10
+      - python-dotenv>=1.0
+      - faker>=25.0
+      # ML / Deep learning
+      - transformers>=4.40
+      - scikit-learn>=1.4
+      - shap>=0.45
+      - lime>=0.2
+      # Explainability / Survival
+      - lifelines>=0.29
+      # API / Dashboard
+      - fastapi>=0.111
+      - uvicorn>=0.30
+      - python-multipart
+      - httpx
+      - jinja2
+      # Federated learning / FairSwarm
+      - -e file:///c:/fairswarm-net
+      # Dev / Testing
+      - pytest>=8.0
+      - pytest-cov>=5.0
