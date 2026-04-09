@@ -30,9 +30,7 @@ from sklearn.metrics import (roc_auc_score, confusion_matrix, roc_curve,
                              precision_score, recall_score, f1_score, accuracy_score)
 from scipy import stats
 
-# ==============================================================
 # 0. Determinism
-# ==============================================================
 def set_determinism(seed=42):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -45,9 +43,7 @@ set_determinism(42)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Running on: {device}")
 
-# ==============================================================
 # 1. Data Loading & Preprocessing
-# ==============================================================
 print("\n" + "=" * 60)
 print("  DATA LOADING & PREPROCESSING")
 print("=" * 60)
@@ -143,9 +139,7 @@ Xq_train, Xq_test, Xc_train, Xc_test, y_train, y_test = train_test_split(
 )
 print(f"Train: {len(Xq_train)}, Test: {len(Xq_test)}")
 
-# ==============================================================
 # 2. Leakage Audit
-# ==============================================================
 print("\n" + "=" * 60)
 print("  DATA LEAKAGE AUDIT")
 print("=" * 60)
@@ -201,9 +195,7 @@ else:
 n_flags = len(flagged_auc) + len(flagged_corr) + len(flagged_ks)
 print(f"\n  LEAKAGE AUDIT: {'ALL CHECKS PASSED' if n_flags == 0 else f'{n_flags} FLAG(S)'}")
 
-# ==============================================================
 # 3. Scaling
-# ==============================================================
 q_scaler = MinMaxScaler()
 c_scaler = StandardScaler()
 Xq_train_scaled = q_scaler.fit_transform(Xq_train)
@@ -229,9 +221,7 @@ assert not torch.isnan(X_test_q).any(), "NaN in quantum test!"
 assert not torch.isnan(X_test_classical).any(), "NaN in classical test!"
 print("NaN check: all tensors clean")
 
-# ==============================================================
 # 4. Model Definitions
-# ==============================================================
 n_qubits = 7
 try:
     dev = qml.device("lightning.qubit", wires=n_qubits)
@@ -373,9 +363,61 @@ class HybridDeepQ(nn.Module):
         return self.fc3(x)
 
 
-# ==============================================================
+# 4b. Improved Quantum Circuit (v2): 3-layer, data re-uploading, all-qubit measurement
+@qml.qnode(dev, interface="torch")
+def quantum_circuit_v2(inputs, weights_ry, weights_rz):
+    """3-layer VQC with data re-uploading, RY+RZ variational gates,
+    shifted-ring entanglement, and all-qubit measurement."""
+    n_layers = 3
+    for layer in range(n_layers):
+        for i in range(n_qubits):
+            qml.RY(inputs[i], wires=i)
+        for i in range(n_qubits):
+            qml.RY(weights_ry[layer][i], wires=i)
+            qml.RZ(weights_rz[layer][i], wires=i)
+        shift = layer + 1
+        for i in range(n_qubits):
+            qml.CNOT(wires=[i, (i + shift) % n_qubits])
+    return tuple(qml.expval(qml.PauliZ(i)) for i in range(n_qubits))
+
+
+class HybridRealQ_v2(nn.Module):
+    """Improved hybrid model: 3-layer VQC with data re-uploading, all-qubit
+    measurement (7D), separate classical encoder, deeper fusion with dropout."""
+    def __init__(self, n_classical_features):
+        super().__init__()
+        self.q_params_ry = nn.Parameter(torch.randn(3, n_qubits) * 0.1)
+        self.q_params_rz = nn.Parameter(torch.randn(3, n_qubits) * 0.1)
+        self.classical_encoder = nn.Sequential(
+            nn.Linear(n_classical_features, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+        )
+        self.fusion = nn.Sequential(
+            nn.Linear(7 + 32, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1),
+        )
+
+    def forward(self, x_q, x_c):
+        x_q = x_q.to(torch.float32)
+        x_c = x_c.to(torch.float32)
+        batch_size = x_q.shape[0]
+        q_out = []
+        for i in range(batch_size):
+            res = quantum_circuit_v2(x_q[i], self.q_params_ry, self.q_params_rz)
+            q_out.append(torch.stack(list(res)))
+        q_out = torch.stack(q_out).to(torch.float32)
+        c_out = self.classical_encoder(x_c)
+        combined = torch.cat([q_out, c_out], dim=1)
+        return self.fusion(combined)
+
+
 # 5. Hardware Logging + Training
-# ==============================================================
 def log_hardware_info():
     info = {"platform": platform.platform(), "torch_version": torch.__version__}
     if torch.cuda.is_available():
@@ -389,9 +431,14 @@ def log_hardware_info():
     return info
 
 
-def train_model(model, train_data, test_data, epochs=50, lr=0.001, verbose=True):
+def train_model(model, train_data, test_data, epochs=50, lr=0.001, verbose=True,
+                use_scheduler=False, time_budget=None):
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    scheduler = None
+    if use_scheduler:
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=epochs, eta_min=1e-5)
     xq_train, xc_train, y_train_t = train_data
     xq_test, xc_test, y_test_t = test_data
     history = {'train_loss': [], 'val_loss': [], 'epoch_time': [], 'lr': []}
@@ -400,6 +447,10 @@ def train_model(model, train_data, test_data, epochs=50, lr=0.001, verbose=True)
         print(f"  Hardware: {hw_info['device']} | torch {hw_info['torch_version']}")
     total_start = time.time()
     for epoch in range(epochs):
+        if time_budget and (time.time() - total_start) > time_budget:
+            if verbose:
+                print(f"  Time budget ({time_budget}s) reached at epoch {epoch}. Stopping.")
+            break
         epoch_start = time.time()
         model.train()
         optimizer.zero_grad()
@@ -407,6 +458,8 @@ def train_model(model, train_data, test_data, epochs=50, lr=0.001, verbose=True)
         loss = criterion(logits, y_train_t.squeeze())
         loss.backward()
         optimizer.step()
+        if scheduler:
+            scheduler.step()
         model.eval()
         with torch.no_grad():
             val_logits = model(xq_test, xc_test).squeeze()
@@ -417,7 +470,8 @@ def train_model(model, train_data, test_data, epochs=50, lr=0.001, verbose=True)
         history['epoch_time'].append(epoch_time)
         history['lr'].append(optimizer.param_groups[0]['lr'])
         if verbose and (epoch + 1) % 10 == 0:
-            print(f"  Epoch {epoch+1:02d} | Loss: {loss.item():.4f} | Val Loss: {val_loss.item():.4f} | Time: {epoch_time:.1f}s")
+            cur_lr = optimizer.param_groups[0]['lr']
+            print(f"  Epoch {epoch+1:02d} | Loss: {loss.item():.4f} | Val Loss: {val_loss.item():.4f} | LR: {cur_lr:.6f} | Time: {epoch_time:.1f}s")
     total_time = time.time() - total_start
     history['total_time'] = total_time
     history['hardware'] = hw_info
@@ -444,9 +498,7 @@ def evaluate_model(model, x_q, x_c, y_true_np):
             'threshold': best_thresh, 'probs': probs, 'preds': preds}
 
 
-# ==============================================================
 # 6. Subsample for feasibility (quantum circuits are slow)
-# ==============================================================
 # Use a subsample for training quantum models to keep runtime reasonable
 MAX_TRAIN = 2000
 MAX_TEST = 500
@@ -476,9 +528,7 @@ test_data = (X_test_q_sub, X_test_c_sub, y_test_sub)
 Xq_train_red = X_train_q_sub[:, :3]
 Xq_test_red = X_test_q_sub[:, :3]
 
-# ==============================================================
 # 7. Train main hybrid model
-# ==============================================================
 print("\n" + "=" * 60)
 print("  TRAINING MAIN HYBRID MODEL")
 print("=" * 60)
@@ -496,9 +546,7 @@ print(f"    Recall:    {hybrid_metrics['recall']:.4f}")
 print(f"    F1:        {hybrid_metrics['f1']:.4f}")
 print(f"    Threshold: {hybrid_metrics['threshold']:.4f}")
 
-# ==============================================================
 # 8. Ablation Studies
-# ==============================================================
 print("\n" + "=" * 80)
 print("  ABLATION STUDIES")
 print("=" * 80)
@@ -546,9 +594,85 @@ ablation.append(run_trial("Hybrid (3-qubit)", HybridReducedQ(n_classical), tr_re
 print("Running Hybrid (Deep 2-layer)...")
 ablation.append(run_trial("Hybrid (Deep 2-layer)", HybridDeepQ(n_classical), train_data, test_data))
 
-# ==============================================================
+# 8b. Improved Hybrid v2
+print("\nRunning HybridRealQ_v2 (improved)...")
+set_determinism(42)
+gc.collect()
+v2_model = HybridRealQ_v2(n_classical)
+start_v2 = time.time()
+v2_history = train_model(v2_model, train_data, test_data,
+                         epochs=75, use_scheduler=True, time_budget=570)
+v2_metrics = evaluate_model(v2_model, X_test_q_sub, X_test_c_sub, y_test_sub.numpy())
+v2_time = time.time() - start_v2
+print(f"  HybridRealQ_v2: AUC={v2_metrics['auc']:.4f} Prec={v2_metrics['precision']:.4f} "
+      f"Rec={v2_metrics['recall']:.4f} F1={v2_metrics['f1']:.4f} Time={v2_time:.1f}s")
+ablation.append({'Model': 'HybridRealQ_v2 (improved)', 'AUC': round(v2_metrics['auc'], 4),
+                 'Precision': round(v2_metrics['precision'], 4),
+                 'Recall': round(v2_metrics['recall'], 4),
+                 'F1': round(v2_metrics['f1'], 4),
+                 'Time_sec': round(v2_time, 1), 'Status': 'OK'})
+
+# 8c. Fairness-aware v2
+print("\nRunning HybridRealQ_v2 (fairness-aware)...")
+race_cols_in_classical = [c for c in classical_features if c.startswith('race_')]
+race_col_indices = [classical_features.index(c) for c in race_cols_in_classical]
+race_labels_train = torch.tensor(
+    X_train_c_sub.numpy()[:, race_col_indices].argmax(axis=1), dtype=torch.long)
+
+set_determinism(42)
+gc.collect()
+v2_fair_model = HybridRealQ_v2(n_classical)
+fair_criterion = nn.BCEWithLogitsLoss()
+fair_optimizer = torch.optim.Adam(v2_fair_model.parameters(), lr=0.001)
+fair_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+    fair_optimizer, T_max=75, eta_min=1e-5)
+fairness_weight = 0.1
+n_race_groups = len(race_cols_in_classical)
+
+hw_info = log_hardware_info()
+print(f"  Hardware: {hw_info['device']} | Fairness weight: {fairness_weight}")
+fair_start = time.time()
+for epoch in range(75):
+    if (time.time() - fair_start) > 570:
+        print(f"  Time budget reached at epoch {epoch}. Stopping.")
+        break
+    epoch_start = time.time()
+    v2_fair_model.train()
+    fair_optimizer.zero_grad()
+    logits = v2_fair_model(X_train_q_sub, X_train_c_sub).squeeze()
+    bce_loss = fair_criterion(logits, y_train_sub.squeeze())
+    # Demographic parity regularization: penalize variance of group-mean predictions
+    group_means = []
+    for g in range(n_race_groups):
+        mask = (race_labels_train == g)
+        if mask.sum() > 0:
+            group_means.append(torch.sigmoid(logits[mask]).mean())
+    if len(group_means) > 1:
+        group_means_t = torch.stack(group_means)
+        fair_penalty = group_means_t.var()
+    else:
+        fair_penalty = torch.tensor(0.0)
+    loss = bce_loss + fairness_weight * fair_penalty
+    loss.backward()
+    fair_optimizer.step()
+    fair_scheduler.step()
+    if (epoch + 1) % 10 == 0:
+        epoch_time = time.time() - epoch_start
+        print(f"  Epoch {epoch+1:02d} | Loss: {loss.item():.4f} | BCE: {bce_loss.item():.4f} | "
+              f"Fair: {fair_penalty.item():.4f} | Time: {epoch_time:.1f}s")
+
+fair_total = time.time() - fair_start
+print(f"  Total: {fair_total:.1f}s ({fair_total/60:.1f}m)")
+v2_fair_metrics = evaluate_model(v2_fair_model, X_test_q_sub, X_test_c_sub, y_test_sub.numpy())
+print(f"  HybridRealQ_v2 (fair): AUC={v2_fair_metrics['auc']:.4f} Prec={v2_fair_metrics['precision']:.4f} "
+      f"Rec={v2_fair_metrics['recall']:.4f} F1={v2_fair_metrics['f1']:.4f}")
+ablation.append({'Model': 'HybridRealQ_v2 (fair)', 'AUC': round(v2_fair_metrics['auc'], 4),
+                 'Precision': round(v2_fair_metrics['precision'], 4),
+                 'Recall': round(v2_fair_metrics['recall'], 4),
+                 'F1': round(v2_fair_metrics['f1'], 4),
+                 'Time_sec': round(fair_total, 1), 'Status': 'OK'})
+
 # 9. Gradient Boosting Baselines
-# ==============================================================
 print("\n" + "=" * 60)
 print("  GRADIENT BOOSTING BASELINES")
 print("=" * 60)
@@ -588,9 +712,7 @@ for ModelClass, name, kwargs in [
                      'Recall': round(rec, 4), 'F1': round(f1_val, 4),
                      'Time_sec': round(elapsed, 1), 'Status': 'OK'})
 
-# ==============================================================
 # 10. Fairness Audit
-# ==============================================================
 print("\n" + "=" * 75)
 print("  FAIRNESS AUDIT")
 print("=" * 75)
@@ -679,9 +801,59 @@ print(f"\n  Demographic Parity Difference:     {dp_diff:.4f}")
 print(f"  Equal Opportunity Diff (TPR gap):  {eo_tpr:.4f}")
 print(f"  FPR Parity Difference:             {eo_fpr:.4f}")
 
-# ==============================================================
+# 10b. Fairness comparison: v2 vs v2_fair
+def quick_fairness_audit(model_to_audit, model_name, threshold_override=None):
+    """Run fairness audit on a model and return gap metrics."""
+    model_to_audit.eval()
+    with torch.no_grad():
+        lgt = model_to_audit(X_test_q_sub, X_test_c_sub).squeeze()
+        prb = torch.sigmoid(lgt).cpu().numpy()
+    y_np = y_test_sub.cpu().numpy().ravel()
+    if threshold_override is None:
+        fpr_a, tpr_a, thr_a = roc_curve(y_np, prb)
+        threshold_override = thr_a[(tpr_a - fpr_a).argmax()]
+    prd = (prb >= threshold_override).astype(int)
+    adf = pd.DataFrame(X_test_c_sub.cpu().numpy(), columns=classical_features)
+    adf['target'] = y_np
+    adf['prediction'] = prd
+    adf['prob'] = prb
+    print(f"\n  --- {model_name} (threshold={threshold_override:.4f}) ---")
+    res = {}
+    for col in race_cols:
+        label = actual_race_map.get(col, col)
+        sg = adf[adf[col] > 0.5]
+        if len(sg) < MIN_SUBGROUP:
+            continue
+        y_s, p_s, pr_s = sg['target'].values, sg['prediction'].values, sg['prob'].values
+        acc = accuracy_score(y_s, p_s)
+        cm = confusion_matrix(y_s, p_s, labels=[0, 1])
+        if cm.shape == (2, 2):
+            tn, fp, fn, tp = cm.ravel()
+            t = tp / (tp + fn) if (tp + fn) > 0 else float('nan')
+            f = fp / (fp + tn) if (fp + tn) > 0 else float('nan')
+        else:
+            t = f = float('nan')
+        try:
+            sa = roc_auc_score(y_s, pr_s)
+        except ValueError:
+            sa = float('nan')
+        res[label] = {'n': len(sg), 'tpr': t, 'fpr': f, 'pos_rate': p_s.mean(), 'auc': sa}
+        print(f"    {label:<35} N={len(sg):>4} AUC={sa:.4f} TPR={t:.4f} PosRate={p_s.mean():.4f}")
+    pr = [v['pos_rate'] for v in res.values()]
+    tp = [v['tpr'] for v in res.values() if not np.isnan(v['tpr'])]
+    fp = [v['fpr'] for v in res.values() if not np.isnan(v['fpr'])]
+    gaps = {
+        'dp_diff': max(pr) - min(pr) if len(pr) >= 2 else float('nan'),
+        'eo_tpr_diff': max(tp) - min(tp) if len(tp) >= 2 else float('nan'),
+        'eo_fpr_diff': max(fp) - min(fp) if len(fp) >= 2 else float('nan'),
+    }
+    print(f"    DP Diff: {gaps['dp_diff']:.4f} | TPR Gap: {gaps['eo_tpr_diff']:.4f} | FPR Gap: {gaps['eo_fpr_diff']:.4f}")
+    return res, gaps
+
+v2_fairness, v2_gaps = quick_fairness_audit(v2_model, "HybridRealQ_v2")
+v2f_fairness, v2f_gaps = quick_fairness_audit(v2_fair_model, "HybridRealQ_v2 (fair)")
+
 # 11. Save All Results
-# ==============================================================
 print("\n" + "=" * 60)
 print("  SAVING RESULTS")
 print("=" * 60)

@@ -5,7 +5,7 @@
     "recall": 0.5272,
     "f1": 0.574,
     "threshold": "0.3998",
-    "total_training_time_sec": 200.1
+    "total_training_time_sec": 212.7
   },
   "ablation": [
     {
@@ -14,7 +14,7 @@
       "Precision": 0.6299,
       "Recall": 0.5272,
       "F1": 0.574,
-      "Time_sec": 200.1,
+      "Time_sec": 212.7,
       "Status": "OK"
     },
     {
@@ -32,7 +32,7 @@
       "Precision": 0.5839,
       "Recall": 0.9837,
       "F1": 0.7328,
-      "Time_sec": 194.5,
+      "Time_sec": 214.9,
       "Status": "OK"
     },
     {
@@ -41,7 +41,7 @@
       "Precision": 0.5087,
       "Recall": 0.7935,
       "F1": 0.62,
-      "Time_sec": 121.9,
+      "Time_sec": 135.8,
       "Status": "OK"
     },
     {
@@ -50,7 +50,25 @@
       "Precision": 0.6526,
       "Recall": 0.7554,
       "F1": 0.7003,
-      "Time_sec": 293.0,
+      "Time_sec": 320.7,
+      "Status": "OK"
+    },
+    {
+      "Model": "HybridRealQ_v2 (improved)",
+      "AUC": 0.848,
+      "Precision": 0.6513,
+      "Recall": 0.9239,
+      "F1": 0.764,
+      "Time_sec": 581.2,
+      "Status": "OK"
+    },
+    {
+      "Model": "HybridRealQ_v2 (fair)",
+      "AUC": 0.8502,
+      "Precision": 0.6504,
+      "Recall": 0.9402,
+      "F1": 0.7689,
+      "Time_sec": 578.5,
       "Status": "OK"
     },
     {
@@ -68,7 +86,7 @@
       "Precision": 0.7178,
       "Recall": 0.9402,
       "F1": 0.8141,
-      "Time_sec": 1.6,
+      "Time_sec": 1.8,
       "Status": "OK"
     }
   ],
