@@ -21,17 +21,66 @@ This project explores whether hybrid quantum-classical neural networks can match
 
 ---
 
-## Architecture
+## Architecture: Cox + Quantum Residual (winning model)
 
-![Architecture](figures/hybrid_architecture.pdf)
+```mermaid
+flowchart TD
+    subgraph Inputs["Patient Features"]
+        QF["Quantum features (7-D)<br/>numeric_age, tumor size, stage,<br/>income, treatment timing, etc."]
+        CF["Classical features (~20-D)<br/>race, marital, subtype, surgery,<br/>chemo, radiation, etc."]
+    end
 
-The model evaluates across three architectural generations plus a residual variant:
+    subgraph Classical_Path["Classical Path"]
+        CE["Classical Encoder<br/>Linear(n,64) → ReLU<br/>Linear(64,32) → ReLU"]
+        CE --> CEMB["Classical embedding (32-D)"]
+    end
+
+    subgraph Quantum_Path["Quantum Path (PennyLane lightning.qubit)"]
+        PRE["Classical preprocessor<br/>Linear(7,7) + Tanh"]
+        ENC["3-layer VQC, data re-uploading<br/>RY/RZ rotations · shifted-ring CNOT"]
+        MEAS["Multi-basis measurement<br/>⟨Z⟩, ⟨X⟩, ⟨Y⟩, ⟨ZZ⟩ correlators"]
+        PRE --> ENC --> MEAS
+        MEAS --> QEMB["Quantum embedding (28-D)"]
+    end
+
+    subgraph Cox_Offset["Cox PH Baseline (lifelines, fixed)"]
+        COX["log-hazard h_Cox(x)"]
+    end
+
+    QF --> PRE
+    CF --> CE
+    QF -.-> COX
+    CF -.-> COX
+
+    QEMB --> FUS["Fusion MLP<br/>concat 28-D + 32-D → 64 → 32 → 1"]
+    CEMB --> FUS
+    FUS --> SCALE["× s (small learnable scale, init 0.5)"]
+    SCALE --> CORR["Quantum correction q_θ(x)"]
+
+    COX --> ADD((+))
+    CORR --> ADD
+    ADD --> OUT["log-hazard h_total(x)<br/>= h_Cox(x) + s · q_θ(x)"]
+
+    classDef quantumStyle fill:#6C1A42,stroke:#6C1A42,color:#fff
+    classDef classicalStyle fill:#1A6C5E,stroke:#1A6C5E,color:#fff
+    classDef coxStyle fill:#C49A2A,stroke:#C49A2A,color:#fff
+    classDef outputStyle fill:#2C5F8A,stroke:#2C5F8A,color:#fff
+    class QF,PRE,ENC,MEAS,QEMB quantumStyle
+    class CF,CE,CEMB classicalStyle
+    class COX coxStyle
+    class FUS,SCALE,CORR,ADD,OUT outputStyle
+```
+
+> At initialization `q_θ(x) ≈ 0`, so the model is equivalent to Cox PH.
+> Training the Cox partial likelihood with `h_Cox` as a fixed offset only improves on or matches Cox PH — never degrades. This is the mathematical safety floor.
+
+The full model family explored in the ablation:
 
 - **v1**: 1-layer VQC, single-qubit measurement, scalar output (7 quantum params)
 - **v2**: 3-layer VQC + data re-uploading + RY/RZ rotations + all-qubit measurement (42 quantum params)
 - **v3**: v2 + trainable input scaling + ZZ correlator measurements (56 quantum params)
 - **v4**: v3 + classical pretraining + learnable output scale and bias
-- **Cox + Quantum Residual**: Cox PH log-hazards as fixed offset + multi-basis quantum correction (winner)
+- **Cox + Quantum Residual** *(diagram above, the winner)*: Cox PH log-hazards as a fixed offset + multi-basis quantum correction
 
 ---
 
