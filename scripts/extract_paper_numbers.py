@@ -186,6 +186,6 @@ output = {
         'event_rate_test': float(df_test['_event'].mean()),
     },
 }
-with open('cox_paper_numbers.json', 'w') as f:
+with open('results/cox_paper_numbers.json', 'w') as f:
     json.dump(output, f, indent=2)
 print(f"\nSaved: cox_paper_numbers.json")

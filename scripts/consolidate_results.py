@@ -15,7 +15,7 @@ import pandas as pd
 survival_rows = []
 
 # Cox PH and v1/v2/v3/v3-full from survival_results.json
-sr = json.load(open('survival_results.json'))
+sr = json.load(open('results/survival_results.json'))
 for entry in sr.get('ablation', []):
     survival_rows.append({
         'Model': entry['Model'],
@@ -28,7 +28,7 @@ for entry in sr.get('ablation', []):
     })
 
 # v4 from survival_v4_results.json
-v4 = json.load(open('survival_v4_results.json'))
+v4 = json.load(open('results/survival_v4_results.json'))
 survival_rows.append({
     'Model': 'HybridSurvivalQ_v4 (full data)',
     'Test_Cindex': v4.get('test_c_index'),
@@ -40,7 +40,7 @@ survival_rows.append({
 })
 
 # Residual from survival_residual_results.json
-res = json.load(open('survival_residual_results.json'))
+res = json.load(open('results/survival_residual_results.json'))
 survival_rows.append({
     'Model': 'Cox + Quantum Residual',
     'Test_Cindex': res.get('final_test_cindex'),
@@ -52,13 +52,13 @@ survival_rows.append({
 })
 
 surv_df = pd.DataFrame(survival_rows)
-surv_df.to_csv('TNBC_Survival_Ablation_Clean.csv', index=False)
+surv_df.to_csv('results/TNBC_Survival_Ablation_Clean.csv', index=False)
 print("=== Survival ablation (clean data) ===")
 print(surv_df.to_string(index=False))
 print(f"\nSaved: TNBC_Survival_Ablation_Clean.csv\n")
 
 # 2. Binary CSV — load existing partial results
-bin_df = pd.read_csv('TNBC_Binary_Honest_Results.csv')
+bin_df = pd.read_csv('results/TNBC_Binary_Honest_Results.csv')
 print("=== Binary ablation (clean data, partial) ===")
 print(bin_df.to_string(index=False))
 print()

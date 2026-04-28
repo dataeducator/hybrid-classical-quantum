@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 os.makedirs('figures', exist_ok=True)
 
 # Load v4 results
-v4 = json.load(open('survival_v4_results.json'))
+v4 = json.load(open('results/survival_v4_results.json'))
 v4_pretrain_epochs = list(range(1, len(v4.get('training_history_pretrain', [])) + 1))
 v4_pretrain_cidx = []
 v4_hybrid_cidx = []
@@ -32,7 +32,7 @@ v4_hybrid_epochs_arr = [2, 4, 6, 8, 10]
 v4_hybrid_cidx_arr = [0.5919, 0.7044, 0.7226, 0.7257, 0.7249]
 
 # Load residual results
-res = json.load(open('survival_residual_results.json'))
+res = json.load(open('results/survival_residual_results.json'))
 history = res.get('training_history', [])
 res_epochs = [e['epoch'] for e in history]
 res_cidx = [e['test_cidx'] for e in history]

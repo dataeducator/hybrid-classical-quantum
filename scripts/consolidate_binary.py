@@ -22,7 +22,7 @@ from sklearn.metrics import (roc_auc_score, roc_curve, precision_score,
 rows = []
 
 # 1. From binary_honest_results.json: MLP, v1, XGBoost, LightGBM
-honest = json.load(open('binary_honest_results.json'))
+honest = json.load(open('results/binary_honest_results.json'))
 for entry in honest['ablation']:
     rows.append({
         'Model': entry['Model'],
@@ -37,10 +37,10 @@ for entry in honest['ablation']:
 
 # 2. v2, v3, v3-full, v4 from individual JSONs
 file_map = [
-    ('binary_v2_result.json', 'HybridRealQ_v2 (subsample, class-weighted)', 2000),
-    ('binary_v3_result.json', 'HybridRealQ_v3 (subsample, class-weighted)', 2000),
-    ('binary_v3_full_result.json', 'HybridRealQ_v3 (full data, class-weighted)', 15673),
-    ('binary_v4_result.json', 'HybridRealQ_v4 (full data, output scaling)', 15673),
+    ('results/binary_v2_result.json', 'HybridRealQ_v2 (subsample, class-weighted)', 2000),
+    ('results/binary_v3_result.json', 'HybridRealQ_v3 (subsample, class-weighted)', 2000),
+    ('results/binary_v3_full_result.json', 'HybridRealQ_v3 (full data, class-weighted)', 15673),
+    ('results/binary_v4_result.json', 'HybridRealQ_v4 (full data, output scaling)', 15673),
 ]
 for fname, label, train_size in file_map:
     r = json.load(open(fname))
@@ -56,7 +56,7 @@ for fname, label, train_size in file_map:
     })
 
 # 3. Compute Ensemble (v3-full + MLP) — needs the saved probs from v3-full
-v3_full = json.load(open('binary_v3_full_result.json'))
+v3_full = json.load(open('results/binary_v3_full_result.json'))
 v3_probs = np.array(v3_full['probs']) if v3_full.get('probs') else None
 
 # We need MLP probs too; let's recompute them quickly from the saved test set
@@ -230,5 +230,5 @@ df_out = df_out.sort_values('Model', key=lambda c: c.map(sort_key)).reset_index(
 
 print("\n=== FINAL BINARY ABLATION (clean data) ===")
 print(df_out.to_string(index=False))
-df_out.to_csv('TNBC_Binary_Ablation_Clean.csv', index=False)
+df_out.to_csv('results/TNBC_Binary_Ablation_Clean.csv', index=False)
 print(f"\nSaved: TNBC_Binary_Ablation_Clean.csv ({len(df_out)} rows)")

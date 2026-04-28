@@ -444,7 +444,7 @@ results = {
         'n_classical_features': n_classical,
     },
 }
-with open('survival_v4_results.json', 'w') as f:
+with open('results/survival_v4_results.json', 'w') as f:
     json.dump(results, f, indent=2, default=str)
 
 print("\n" + "=" * 60)

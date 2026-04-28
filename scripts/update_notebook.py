@@ -214,7 +214,7 @@ import pandas as pd
 
 # Survival ablation
 try:
-    surv_df = pd.read_csv('TNBC_Survival_Ablation_Clean.csv')
+    surv_df = pd.read_csv('results/TNBC_Survival_Ablation_Clean.csv')
     print("=== SURVIVAL ANALYSIS (clean data, leakage-free) ===")
     print(surv_df.to_string(index=False))
 except FileNotFoundError:
@@ -224,7 +224,7 @@ print()
 
 # Binary ablation
 try:
-    bin_df = pd.read_csv('TNBC_Binary_Ablation_Clean.csv')
+    bin_df = pd.read_csv('results/TNBC_Binary_Ablation_Clean.csv')
     print("=== BINARY CLASSIFICATION (clean data, class-weighted) ===")
     print(bin_df.to_string(index=False))
 except FileNotFoundError:

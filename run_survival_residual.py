@@ -567,7 +567,7 @@ results = {
     },
     'training_time_sec': round(total_time, 1),
 }
-with open('survival_residual_results.json', 'w') as f:
+with open('results/survival_residual_results.json', 'w') as f:
     json.dump(results, f, indent=2, default=str)
 
 print(f"\nSaved: survival_residual_results.json")

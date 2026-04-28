@@ -727,7 +727,7 @@ print("=" * 60)
 ablation_df = pd.DataFrame(ablation)
 print("\nSurvival Analysis Results:")
 print(ablation_df.to_string(index=False))
-ablation_df.to_csv('TNBC_Survival_Ablation_Results.csv', index=False)
+ablation_df.to_csv('results/TNBC_Survival_Ablation_Results.csv', index=False)
 
 results = {
     'task': 'survival_analysis_cox_ph',
@@ -761,7 +761,7 @@ results = {
     'hardware': log_hardware_info(),
 }
 
-with open('survival_results.json', 'w') as f:
+with open('results/survival_results.json', 'w') as f:
     json.dump(results, f, indent=2, default=str)
 
 print("\nSaved: TNBC_Survival_Ablation_Results.csv")

@@ -182,44 +182,65 @@ For full reproduction details (including SEER cohort extraction), see [REPRODUCI
 
 ```
 .
-├── updated_main.tex / updated_main.pdf   # Final paper (20 pages)
+├── README.md                              # this file
 ├── REPRODUCING.md                         # Reproduction instructions
+├── DATA_COMPLIANCE.md                     # Data use compliance
+├── LICENSE.md                             # PolyForm Noncommercial 1.0.0
 ├── requirements.txt                       # Pinned dependencies
-│
-├── run_survival_experiments.py            # Cox PH + HybridSurvivalQ v1/v2/v3
-├── run_survival_v4.py                     # v4 (output scaling + classical pretrain)
-├── run_survival_residual.py               # Cox + Quantum Residual (winner)
-├── run_survival_one.py                    # Parallel single-model survival runner
-├── run_binary_honest.py                   # Honest binary baselines (full data)
-├── run_binary_one.py                      # Parallel single-model binary runner
-├── run_experiments.py                     # Original notebook-equivalent script
-│
-├── consolidate_results.py                 # Assemble survival results CSV
-├── consolidate_binary.py                  # Assemble binary results CSV
-├── extract_paper_numbers.py               # Cox PH coefficients + subgroup C-indices
-├── fix_race_encoding.py                   # Split NH Unknown from White
-├── update_notebook.py                     # Patch notebook with survival pivot
-├── generate_paper_figures.py              # Plot training curves
-├── generate_presentation.py               # Build the PPTX deck
-│
-├── figures/
-│   ├── hybrid_architecture.pdf            # TikZ architecture diagram
-│   ├── hybrid_architecture.tex
-│   ├── survival_training_curve.png        # v4 + residual training dynamics
-│   └── quantum_correction_distribution.png
-│
-├── codes/                                 # Supporting library code
-│   ├── 1_data_harmonization/
-│   ├── 2_feature_engineering/
-│   ├── 5_explainability/
-│   ├── 6_survival_modeling/
-│   └── 7_disparity_analysis/
-│
 ├── *.ipynb                                # Jupyter notebook (51 cells)
 ├── Final_Presentation_Hybrid_QC_TNBC.pptx # 15-slide deck
-├── DATA_COMPLIANCE.md                     # Data use compliance
-└── LICENSE.md                             # PolyForm Noncommercial 1.0.0
+│
+├── paper/
+│   ├── updated_main.tex                   # LaTeX source (20 pages)
+│   └── updated_main.pdf                   # Compiled paper
+│
+├── run_survival_experiments.py            # ENTRY: Cox PH + HybridSurvivalQ v1/v2/v3
+├── run_survival_v4.py                     # ENTRY: v4 (output scaling + pretrain)
+├── run_survival_residual.py               # ENTRY: Cox + Quantum Residual (winner)
+├── run_survival_one.py                    # ENTRY: parallel single-model survival
+├── run_binary_honest.py                   # ENTRY: honest binary baselines
+├── run_binary_one.py                      # ENTRY: parallel single-model binary
+├── run_experiments.py                     # ENTRY: notebook-equivalent script
+│
+├── scripts/                               # helpers (not user entry points)
+│   ├── consolidate_results.py             # Assemble survival results CSV
+│   ├── consolidate_binary.py              # Assemble binary results CSV
+│   ├── extract_paper_numbers.py           # Cox coefs + subgroup C-indices
+│   ├── fix_race_encoding.py               # Split NH Unknown from White
+│   ├── update_notebook.py                 # Patch notebook with survival pivot
+│   ├── generate_paper_figures.py          # Plot training curves
+│   └── generate_presentation.py           # Build the PPTX deck
+│
+├── results/                               # generated artifacts (CSV + JSON)
+│   ├── TNBC_Survival_Ablation_Clean.csv
+│   ├── TNBC_Binary_Ablation_Clean.csv
+│   ├── survival_results.json              # Cox PH + v1/v2/v3 ablation
+│   ├── survival_v4_results.json           # v4
+│   ├── survival_residual_results.json     # Cox + Quantum Residual
+│   ├── survival_v1_full_result.json       # v1 full data
+│   ├── survival_v2_full_result.json       # v2 full data
+│   ├── binary_honest_results.json         # MLP + v1 + XGBoost + LightGBM
+│   ├── binary_v2_result.json              # binary v2 (subsample)
+│   ├── binary_v3_result.json              # binary v3 (subsample)
+│   ├── binary_v3_full_result.json         # binary v3 (full data)
+│   ├── binary_v4_result.json              # binary v4 (full data)
+│   └── cox_paper_numbers.json             # Cox coefs + subgroup C-indices
+│
+├── figures/
+│   ├── hybrid_architecture.{tex,pdf,mmd}  # TikZ + Mermaid architecture
+│   ├── survival_training_curve.png        # v4 + residual training dynamics
+│   ├── quantum_correction_distribution.png
+│   └── *.png                              # other figures
+│
+└── codes/                                 # Supporting library code
+    ├── 1_data_harmonization/
+    ├── 2_feature_engineering/
+    ├── 5_explainability/
+    ├── 6_survival_modeling/
+    └── 7_disparity_analysis/
 ```
+
+**Convention:** all entry-point `run_*.py` scripts live at the project root (run with `python run_*.py`). Helper scripts that postprocess results live in `scripts/`. All generated CSV/JSON output goes to `results/`. The compiled paper lives in `paper/`.
 
 ---
 
