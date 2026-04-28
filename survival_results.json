@@ -1,0 +1,120 @@
+{
+  "task": "survival_analysis_cox_ph",
+  "data": {
+    "total_patients": 20110,
+    "event_rate": 0.2888115365489806,
+    "median_followup_months": 92.0,
+    "train_size": 16088,
+    "test_size": 4022,
+    "subsample_train": 2000,
+    "subsample_test": 500,
+    "n_quantum_features": 7,
+    "n_classical_features": 19
+  },
+  "leakage_audit": {
+    "auc_flags": 0,
+    "corr_flags": 0,
+    "all_passed": true
+  },
+  "ablation": [
+    {
+      "Model": "Cox PH (lifelines)",
+      "Test_Cindex": 0.7323,
+      "Train_Cindex": 0.7259,
+      "Time_sec": 0.1,
+      "Status": "OK"
+    },
+    {
+      "Model": "HybridSurvivalQ_v1",
+      "Test_Cindex": 0.5869,
+      "Train_Cindex": null,
+      "Time_sec": 223.0,
+      "Status": "OK"
+    },
+    {
+      "Model": "HybridSurvivalQ_v2",
+      "Test_Cindex": 0.5759,
+      "Train_Cindex": null,
+      "Time_sec": 575.0,
+      "Status": "OK"
+    },
+    {
+      "Model": "HybridSurvivalQ_v3",
+      "Test_Cindex": 0.5872,
+      "Train_Cindex": null,
+      "Time_sec": 615.0,
+      "Status": "OK"
+    },
+    {
+      "Model": "HybridSurvivalQ_v3 (full data)",
+      "Test_Cindex": 0.6674,
+      "Train_Cindex": null,
+      "Time_sec": 1038.1,
+      "Status": "OK"
+    }
+  ],
+  "fairness_cox": {
+    "subgroups": {
+      "race_0": {
+        "n": 268,
+        "events": 69,
+        "c_index": 0.7473
+      },
+      "race_1": {
+        "n": 77,
+        "events": 20,
+        "c_index": 0.7303
+      },
+      "race_2": {
+        "n": 89,
+        "events": 28,
+        "c_index": 0.7482
+      },
+      "race_3": {
+        "n": 60,
+        "events": 20,
+        "c_index": 0.7443
+      }
+    },
+    "cindex_gap": 0.0178
+  },
+  "fairness_v3_full": {
+    "subgroups": {
+      "race_0": {
+        "n": 2236,
+        "events": 599,
+        "c_index": 0.6622
+      },
+      "race_1": {
+        "n": 599,
+        "events": 228,
+        "c_index": 0.6693
+      },
+      "race_2": {
+        "n": 716,
+        "events": 218,
+        "c_index": 0.6282
+      },
+      "race_3": {
+        "n": 435,
+        "events": 106,
+        "c_index": 0.6932
+      },
+      "race_4": {
+        "n": 36,
+        "events": 11,
+        "c_index": 0.5318
+      }
+    },
+    "cindex_gap": 0.1614
+  },
+  "hardware": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch_version": "2.10.0+cu128",
+    "device": "GPU",
+    "gpu_name": "NVIDIA GeForce RTX 5080",
+    "gpu_memory_gb": 17.09,
+    "cuda_version": "12.8",
+    "pennylane_version": "0.44.1"
+  }
+}

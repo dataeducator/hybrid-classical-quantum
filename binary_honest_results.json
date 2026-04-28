@@ -1,0 +1,179 @@
+{
+  "task": "binary_classification_honest",
+  "data": {
+    "total_clean_rows": 19592,
+    "train_size_full": 15673,
+    "test_size": 3919,
+    "subsample_train": 2000,
+    "subsample_test": 500,
+    "positive_rate_train": 0.7643718496777898,
+    "positive_rate_test": 0.7644807348813473,
+    "pos_weight": 0.30826377868652344,
+    "n_quantum_features": 7,
+    "n_classical_features": 20
+  },
+  "leakage_audit": {
+    "auc_flags": 0,
+    "corr_flags": 0,
+    "ks_flags": 0,
+    "all_passed": true
+  },
+  "ablation": [
+    {
+      "Model": "Classical MLP (full data, class-weighted)",
+      "AUC": 0.5792,
+      "Precision": 0.812,
+      "Recall": 0.5434,
+      "F1": 0.6511,
+      "Time_sec": 2.9,
+      "Train_size": 15673,
+      "Status": "OK"
+    },
+    {
+      "Model": "HybridRealQ v1 (subsample, class-weighted)",
+      "AUC": 0.5649,
+      "Precision": 0.8228,
+      "Recall": 0.6972,
+      "F1": 0.7548,
+      "Time_sec": 191.7,
+      "Train_size": 2000,
+      "Status": "OK"
+    },
+    {
+      "Model": "XGBoost (full data, balanced)",
+      "AUC": 0.7434,
+      "Precision": 0.875,
+      "Recall": 0.7009,
+      "F1": 0.7784,
+      "Time_sec": 0.44,
+      "Train_size": 15673,
+      "Status": "OK"
+    },
+    {
+      "Model": "LightGBM (full data, balanced)",
+      "AUC": 0.7462,
+      "Precision": 0.8715,
+      "Recall": 0.7173,
+      "F1": 0.7869,
+      "Time_sec": 0.27,
+      "Train_size": 15673,
+      "Status": "OK"
+    }
+  ],
+  "fairness_xgboost": {
+    "subgroups": {
+      "Non-Hispanic White": {
+        "n": 2183,
+        "accuracy": 0.7205680256527714,
+        "auc": 0.7440829980769744,
+        "tpr": 0.7407189157336476,
+        "fpr": 0.3497942386831276,
+        "pos_rate": 0.6536875858909758
+      },
+      "Non-Hispanic Black": {
+        "n": 588,
+        "accuracy": 0.6241496598639455,
+        "auc": 0.7280487163299663,
+        "tpr": 0.5681818181818182,
+        "fpr": 0.2604166666666667,
+        "pos_rate": 0.467687074829932
+      },
+      "Hispanic": {
+        "n": 692,
+        "accuracy": 0.6546242774566474,
+        "auc": 0.710218057307623,
+        "tpr": 0.6499068901303539,
+        "fpr": 0.32903225806451614,
+        "pos_rate": 0.5780346820809249
+      },
+      "Non-Hispanic Asian/Pacific Islander": {
+        "n": 408,
+        "accuracy": 0.7205882352941176,
+        "auc": 0.7714748475609755,
+        "tpr": 0.7286585365853658,
+        "fpr": 0.3125,
+        "pos_rate": 0.6470588235294118
+      },
+      "Non-Hispanic American Indian/Alaska Native": {
+        "n": 39,
+        "accuracy": 0.6923076923076923,
+        "auc": 0.7482758620689656,
+        "tpr": 0.7241379310344828,
+        "fpr": 0.4,
+        "pos_rate": 0.6410256410256411
+      }
+    },
+    "demographic_parity_diff": 0.18600051106104376,
+    "equal_opportunity_tpr_gap": 0.17253709755182933,
+    "fpr_parity_diff": 0.13958333333333334
+  },
+  "feature_importance": {
+    "xgboost_gain": {
+      "numeric_age": 0.022273018956184387,
+      "Tumor_Size_Summary_2016_": 0.030279479920864105,
+      "income_encoded": 0.02312556467950344,
+      "years_since_2010": 0.021589510142803192,
+      "Time_from_diagnosis_to_treatment_in_days_recode": 0.02729540318250656,
+      "income_age_ratio": 0.0225952360779047,
+      "stage_cleaned": 0.4190162122249603,
+      "Year_of_diagnosis": 0.021328890696167946,
+      "Age_recode_with_single_ages_and_90_": 0.022832293063402176,
+      "Laterality": 0.0189975593239069,
+      "chemotherapy_binary": 0.03473065048456192,
+      "recent_diagnosis": 0.021554507315158844,
+      "age_stage_interaction": 0.0,
+      "race_0": 0.02015545591711998,
+      "race_1": 0.0347273014485836,
+      "race_2": 0.022628536447882652,
+      "race_3": 0.025065850466489792,
+      "race_4": 0.020510466769337654,
+      "race_5": 0.02553975209593773,
+      "marital_divorced": 0.02456323243677616,
+      "marital_married (including common law)": 0.033001046627759933,
+      "marital_separated": 0.02052959054708481,
+      "marital_single (never married)": 0.02292438969016075,
+      "marital_unknown": 0.02316928282380104,
+      "marital_unmarried or domestic partner": 0.017400870099663734,
+      "marital_widowed": 0.024165891110897064,
+      "subtype_hr-/her2-": 0.0
+    },
+    "lightgbm_gain": {
+      "numeric_age": 0.11943972835314091,
+      "Tumor_Size_Summary_2016_": 0.10568760611205433,
+      "income_encoded": 0.03234295415959253,
+      "years_since_2010": 0.07215619694397284,
+      "Time_from_diagnosis_to_treatment_in_days_recode": 0.1934634974533107,
+      "income_age_ratio": 0.19881154499151105,
+      "stage_cleaned": 0.03234295415959253,
+      "Year_of_diagnosis": 0.02198641765704584,
+      "Age_recode_with_single_ages_and_90_": 0.036926994906621394,
+      "Laterality": 0.02504244482173175,
+      "chemotherapy_binary": 0.02037351443123939,
+      "recent_diagnosis": 0.003395585738539898,
+      "age_stage_interaction": 0.0,
+      "race_0": 0.020797962648556875,
+      "race_1": 0.014431239388794566,
+      "race_2": 0.012563667232597622,
+      "race_3": 0.00933786078098472,
+      "race_4": 0.0031409168081494056,
+      "race_5": 0.004414261460101867,
+      "marital_divorced": 0.011035653650254669,
+      "marital_married (including common law)": 0.02835314091680815,
+      "marital_separated": 0.004414261460101867,
+      "marital_single (never married)": 0.0133276740237691,
+      "marital_unknown": 0.005602716468590832,
+      "marital_unmarried or domestic partner": 0.0038200339558573855,
+      "marital_widowed": 0.006791171477079796,
+      "subtype_hr-/her2-": 0.0
+    }
+  },
+  "hardware": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch_version": "2.10.0+cu128",
+    "device": "GPU",
+    "gpu_name": "NVIDIA GeForce RTX 5080",
+    "gpu_memory_gb": 17.09,
+    "cuda_version": "12.8",
+    "pennylane_version": "0.44.1"
+  }
+}

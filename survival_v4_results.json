@@ -1,0 +1,55 @@
+{
+  "model": "HybridSurvivalQ_v4",
+  "innovations": [
+    "output_scale_bias_layer",
+    "small_quantum_init_0.05",
+    "gradient_clipping_max_1.0",
+    "classical_pretraining_then_hybrid",
+    "higher_lr_for_pretrain",
+    "mini_batch_cox_full_dataset",
+    "encoding_range_pi_4_to_3pi_4"
+  ],
+  "test_c_index": 0.7249,
+  "pretrain_final_cidx": 0.5613,
+  "hybrid_final_cidx": 0.7249,
+  "output_scale_final": 2.65,
+  "output_bias_final": 1.02,
+  "log_hazard_std": 0.8064,
+  "total_time_sec": 1321.0,
+  "pretrain_time_sec": 2.0,
+  "hybrid_time_sec": 1317.9,
+  "fairness_subgroups": {
+    "race_0": {
+      "n": 2236,
+      "events": 599,
+      "c_index": 0.720983240182087
+    },
+    "race_1": {
+      "n": 599,
+      "events": 228,
+      "c_index": 0.7100754796704246
+    },
+    "race_2": {
+      "n": 716,
+      "events": 218,
+      "c_index": 0.7057202908429903
+    },
+    "race_3": {
+      "n": 435,
+      "events": 106,
+      "c_index": 0.7428571428571429
+    },
+    "race_4": {
+      "n": 36,
+      "events": 11,
+      "c_index": 0.7229299363057324
+    }
+  },
+  "fairness_gap": 0.0371,
+  "data": {
+    "train_size": 16088,
+    "test_size": 4022,
+    "n_quantum_features": 7,
+    "n_classical_features": 19
+  }
+}

@@ -51,6 +51,24 @@ print("=" * 60)
 df = pd.read_csv('breast_cancer_4quantum.csv')
 print(f"Loaded: {df.shape}")
 
+# Re-label survival_60_months to handle right-censoring properly.
+# Censored patients (alive but <60 months follow-up) have unknown outcomes
+# and contaminate the negative class. We drop them to get clean labels.
+if 'Vital_status_recode_study_cutoff_used_' in df.columns and 'Survival_months' in df.columns:
+    n_before = len(df)
+    vital = df['Vital_status_recode_study_cutoff_used_'].astype(str).str.lower()
+    sm = pd.to_numeric(df['Survival_months'], errors='coerce')
+    target = pd.Series(np.nan, index=df.index, dtype=float)
+    target[sm >= 60] = 1.0  # Survived to 60 months
+    target[(sm < 60) & (vital == 'dead')] = 0.0  # Confirmed early death
+    # Censored (alive AND <60mo follow-up) stays NaN -> dropped below
+    df['survival_60_months'] = target
+    df = df.dropna(subset=['survival_60_months'])
+    df['survival_60_months'] = df['survival_60_months'].astype(int)
+    n_after = len(df)
+    print(f"  Re-labeled survival_60_months: dropped {n_before - n_after} censored patients")
+    print(f"  Clean cohort: {n_after} patients ({df['survival_60_months'].mean():.1%} positive)")
+
 # Drop non-predictive columns
 initial_drops = [
     'Patient_ID', 'age_group', 'Sex_no_total_',

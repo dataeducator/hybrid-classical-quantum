@@ -1,0 +1,159 @@
+{
+  "cox_overall_test_cindex": 0.7326249235925991,
+  "cox_subgroup_cindex": {
+    "Non-Hispanic White": {
+      "n": 2218,
+      "events": 598,
+      "c_index": 0.7266562892949464
+    },
+    "Non-Hispanic Black": {
+      "n": 599,
+      "events": 228,
+      "c_index": 0.7194960339562487
+    },
+    "Hispanic": {
+      "n": 716,
+      "events": 218,
+      "c_index": 0.7119445255948323
+    },
+    "Non-Hispanic Asian/Pacific Islander": {
+      "n": 435,
+      "events": 106,
+      "c_index": 0.7520585544373285
+    },
+    "Non-Hispanic American Indian/Alaska Native": {
+      "n": 36,
+      "events": 11,
+      "c_index": 0.7961783439490446
+    }
+  },
+  "cox_subgroup_gap": 0.08423381835421229,
+  "cox_top_coefficients": [
+    {
+      "feature": "stage_cleaned",
+      "coef": 2.575209110163594,
+      "hr": 13.134063337486193,
+      "hr_ci_low": 12.006177572870499,
+      "hr_ci_high": 14.367905081038703,
+      "p_value": 0.0
+    },
+    {
+      "feature": "Tumor_Size_Summary_2016_",
+      "coef": 0.7196769502118298,
+      "hr": 2.053769633620359,
+      "hr_ci_low": 1.5869195800076434,
+      "hr_ci_high": 2.657960593038235,
+      "p_value": 4.507711415055849e-08
+    },
+    {
+      "feature": "income_encoded",
+      "coef": -0.3268282286516712,
+      "hr": 0.7212076151919445,
+      "hr_ci_low": 0.45035845503105165,
+      "hr_ci_high": 1.1549476165046995,
+      "p_value": 0.17371545027928492
+    },
+    {
+      "feature": "income_age_ratio",
+      "coef": 0.2791110141201804,
+      "hr": 1.3219540912942342,
+      "hr_ci_low": 0.6323156067352016,
+      "hr_ci_high": 2.7637505715107253,
+      "p_value": 0.4582195166366009
+    },
+    {
+      "feature": "numeric_age",
+      "coef": 0.2508182881243133,
+      "hr": 1.2850765494436063,
+      "hr_ci_low": 0.8388130347948293,
+      "hr_ci_high": 1.9687602235864368,
+      "p_value": 0.24915922708003974
+    },
+    {
+      "feature": "chemotherapy_binary",
+      "coef": -0.168548536792331,
+      "hr": 0.8448902541609068,
+      "hr_ci_low": 0.8210096561000326,
+      "hr_ci_high": 0.8694654639836622,
+      "p_value": 1.0255218195188586e-30
+    },
+    {
+      "feature": "Time_from_diagnosis_to_treatment_in_days_recode",
+      "coef": -0.16366727930744593,
+      "hr": 0.8490244628979063,
+      "hr_ci_low": 0.5767083553866662,
+      "hr_ci_high": 1.2499256025444168,
+      "p_value": 0.4068628382823224
+    },
+    {
+      "feature": "race_1",
+      "coef": 0.09143300643831233,
+      "hr": 1.0957433664827467,
+      "hr_ci_low": 1.018076929506406,
+      "hr_ci_high": 1.1793347736236943,
+      "p_value": 0.014785631386071849
+    },
+    {
+      "feature": "marital_married (including common law)",
+      "coef": -0.07396955000665384,
+      "hr": 0.9286999723187229,
+      "hr_ci_low": 0.8412189856485554,
+      "hr_ci_high": 1.0252783797073326,
+      "p_value": 0.14281130204436854
+    },
+    {
+      "feature": "Age_recode_with_single_ages_and_90_",
+      "coef": 0.06691665699457283,
+      "hr": 1.0692063635893496,
+      "hr_ci_low": 0.9541889291705156,
+      "hr_ci_high": 1.1980879393913695,
+      "p_value": 0.24915922707998497
+    },
+    {
+      "feature": "race_5",
+      "coef": -0.0522940749974458,
+      "hr": 0.9490497340038037,
+      "hr_ci_low": 0.90838353318562,
+      "hr_ci_high": 0.9915364652791889,
+      "p_value": 0.01926568047815857
+    },
+    {
+      "feature": "race_3",
+      "coef": -0.051418233636827376,
+      "hr": 0.9498813151275408,
+      "hr_ci_low": 0.8900162629779507,
+      "hr_ci_high": 1.013773062763438,
+      "p_value": 0.12159548265736615
+    },
+    {
+      "feature": "marital_single (never married)",
+      "coef": 0.051129197052088654,
+      "hr": 1.0524588590818627,
+      "hr_ci_low": 0.9721446063803594,
+      "hr_ci_high": 1.1394083172298253,
+      "p_value": 0.20679498702323754
+    },
+    {
+      "feature": "recent_diagnosis",
+      "coef": -0.04266417313853177,
+      "hr": 0.9582331364652392,
+      "hr_ci_low": 0.9105848798009135,
+      "hr_ci_high": 1.008374687729016,
+      "p_value": 0.1011124147163112
+    },
+    {
+      "feature": "marital_widowed",
+      "coef": 0.035421987818256194,
+      "hr": 1.0360568199223807,
+      "hr_ci_low": 0.9847519735446464,
+      "hr_ci_high": 1.090034610688709,
+      "p_value": 0.17162924670820578
+    }
+  ],
+  "data": {
+    "train_size": 16088,
+    "test_size": 4022,
+    "event_rate_train": 0.28878667329686725,
+    "event_rate_test": 0.2889109895574341
+  }
+}

@@ -1,0 +1,8 @@
+Model,Test_Cindex,Train_Cindex,Subgroup_Gap,Time_sec,Train_size,Status
+Cox PH (lifelines),0.7323,0.7259,,0.1,16088,OK
+HybridSurvivalQ_v1,0.5869,,,223.0,2000,OK
+HybridSurvivalQ_v2,0.5759,,,575.0,2000,OK
+HybridSurvivalQ_v3,0.5872,,,615.0,2000,OK
+HybridSurvivalQ_v3 (full data),0.6674,,,1038.1,16088,OK
+HybridSurvivalQ_v4 (full data),0.7249,,0.0371,1321.0,16088,OK
+Cox + Quantum Residual,0.7364,,0.0754,1236.6,16088,OK (BEATS Cox PH)

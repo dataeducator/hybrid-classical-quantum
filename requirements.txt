@@ -1,0 +1,17 @@
+# Core ML frameworks
+torch==2.10.0
+pennylane==0.44.1
+pennylane-lightning==0.44.0
+
+# Gradient boosting baselines
+xgboost==3.2.0
+lightgbm==4.6.0
+
+# Survival analysis
+lifelines==0.30.3
+
+# Standard scientific stack
+scikit-learn>=1.4
+pandas>=2.0
+numpy>=1.24
+scipy>=1.11

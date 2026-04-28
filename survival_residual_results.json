@@ -1,0 +1,137 @@
+{
+  "method": "quantum_residual_learning",
+  "cox_test_cindex": 0.7326,
+  "cox_train_cindex": 0.726,
+  "final_test_cindex": 0.7364,
+  "improvement_over_cox": 0.0038,
+  "beats_cox": true,
+  "training_history": [
+    {
+      "epoch": 1,
+      "loss": 4.906835404653398,
+      "test_cidx": 0.7327474429435675,
+      "correction_std": 0.007104214280843735,
+      "correction_mean": -0.00024171947734430432,
+      "time": 129.5539207458496
+    },
+    {
+      "epoch": 2,
+      "loss": 4.904502308557904,
+      "test_cidx": 0.7336751658893287,
+      "correction_std": 0.056975483894348145,
+      "correction_mean": -0.0008484342833980918,
+      "time": 130.36397552490234
+    },
+    {
+      "epoch": 3,
+      "loss": 4.901435867188469,
+      "test_cidx": 0.7344977576016168,
+      "correction_std": 0.07998039573431015,
+      "correction_mean": 0.005062382202595472,
+      "time": 140.10484671592712
+    },
+    {
+      "epoch": 4,
+      "loss": 4.893091618068635,
+      "test_cidx": 0.7354591867443693,
+      "correction_std": 0.14222407341003418,
+      "correction_mean": 3.65452651749365e-05,
+      "time": 157.467435836792
+    },
+    {
+      "epoch": 5,
+      "loss": 4.891113879188659,
+      "test_cidx": 0.7367095261470473,
+      "correction_std": 0.16123458743095398,
+      "correction_mean": 0.012493733316659927,
+      "time": 158.36601948738098
+    },
+    {
+      "epoch": 6,
+      "loss": 4.886318940964956,
+      "test_cidx": 0.736664049532059,
+      "correction_std": 0.15186412632465363,
+      "correction_mean": 0.055244434624910355,
+      "time": 157.0622661113739
+    },
+    {
+      "epoch": 7,
+      "loss": 4.885806522672138,
+      "test_cidx": 0.7359257233122491,
+      "correction_std": 0.15608185529708862,
+      "correction_mean": 0.05565652623772621,
+      "time": 155.17040038108826
+    },
+    {
+      "epoch": 8,
+      "loss": 4.880403344593351,
+      "test_cidx": 0.7362847210611567,
+      "correction_std": 0.19725625216960907,
+      "correction_mean": -0.0032116558868438005,
+      "time": 143.05296683311462
+    },
+    {
+      "epoch": 9,
+      "loss": 4.877884039803157,
+      "test_cidx": 0.7363810244811319,
+      "correction_std": 0.20467013120651245,
+      "correction_mean": 0.11025393009185791,
+      "time": 142.31896376609802
+    }
+  ],
+  "correction_stats": {
+    "final_std": 0.20467013120651245,
+    "final_min": -0.5402423143386841,
+    "final_max": 0.8424314260482788,
+    "final_mean": 0.11025393009185791
+  },
+  "fairness_subgroups": {
+    "Non-Hispanic White": {
+      "n": 2218,
+      "events": 598,
+      "c_index": 0.7299508710915406
+    },
+    "Non-Hispanic Black": {
+      "n": 599,
+      "events": 228,
+      "c_index": 0.7175850346668715
+    },
+    "Hispanic": {
+      "n": 716,
+      "events": 218,
+      "c_index": 0.7263000292141396
+    },
+    "Non-Hispanic Asian/Pacific Islander": {
+      "n": 435,
+      "events": 106,
+      "c_index": 0.7485818847209516
+    },
+    "Non-Hispanic American Indian/Alaska Native": {
+      "n": 36,
+      "events": 11,
+      "c_index": 0.7929936305732485
+    }
+  },
+  "fairness_gap": 0.0754,
+  "binary_at_60mo": {
+    "cox_ph": {
+      "auc": 0.7402135482332207,
+      "precision": 0.8668024439918534,
+      "recall": 0.7072116982386175,
+      "f1": 0.7789165446559297
+    },
+    "cox_plus_residual": {
+      "auc": 0.7426012518548337,
+      "precision": 0.8594488188976378,
+      "recall": 0.7254901960784313,
+      "f1": 0.7868084339520635
+    }
+  },
+  "data": {
+    "train_size": 16088,
+    "test_size": 4022,
+    "n_quantum_features": 7,
+    "n_classical_features": 20
+  },
+  "training_time_sec": 1313.5
+}

@@ -1,0 +1,5 @@
+Model,AUC,Precision,Recall,F1,Time_sec,Train_size,Status
+"Classical MLP (full data, class-weighted)",0.5792,0.812,0.5434,0.6511,2.9,15673,OK
+"HybridRealQ v1 (subsample, class-weighted)",0.5649,0.8228,0.6972,0.7548,191.7,2000,OK
+"XGBoost (full data, balanced)",0.7434,0.875,0.7009,0.7784,0.44,15673,OK
+"LightGBM (full data, balanced)",0.7462,0.8715,0.7173,0.7869,0.27,15673,OK

@@ -1,0 +1,6 @@
+Model,Test_Cindex,Train_Cindex,Time_sec,Status
+Cox PH (lifelines),0.7323,0.7259,0.1,OK
+HybridSurvivalQ_v1,0.5869,,223.0,OK
+HybridSurvivalQ_v2,0.5759,,575.0,OK
+HybridSurvivalQ_v3,0.5872,,615.0,OK
+HybridSurvivalQ_v3 (full data),0.6674,,1038.1,OK
