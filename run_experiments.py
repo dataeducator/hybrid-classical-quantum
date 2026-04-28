@@ -117,8 +117,10 @@ quantum_features = [
 target_col = 'survival_60_months'
 
 # Drop leaky/non-predictive columns that shouldn't be features
+# Year_of_follow_up_recode is a leakage feature — patients followed up later are
+# necessarily still alive, which directly predicts the survival target
 cols_to_exclude = quantum_features + [target_col, 'Survival_months',
-    'Vital_status_recode_study_cutoff_used_']
+    'Vital_status_recode_study_cutoff_used_', 'Year_of_follow_up_recode']
 
 # Only keep numeric columns as classical features (strings need encoding first)
 classical_features = [col for col in df.columns
@@ -904,6 +906,76 @@ for ModelClass, name, kwargs in [
     ablation.append({'Model': name, 'AUC': round(auc, 4), 'Precision': round(prec, 4),
                      'Recall': round(rec, 4), 'F1': round(f1_val, 4),
                      'Time_sec': round(elapsed, 1), 'Status': 'OK'})
+    # Capture trained boosting models for feature importance
+    if name == "XGBoost":
+        xgb_trained = model
+    elif name == "LightGBM":
+        lgbm_trained = model
+
+# 9b. Feature Importance Analysis
+print("\n" + "=" * 75)
+print("  FEATURE IMPORTANCE ANALYSIS")
+print("=" * 75)
+
+all_feature_names = quantum_features + classical_features
+
+# XGBoost and LightGBM provide native feature importance (gain-based)
+xgb_importance = dict(zip(all_feature_names, xgb_trained.feature_importances_))
+lgbm_importance = dict(zip(all_feature_names, lgbm_trained.feature_importances_))
+
+# Permutation importance for HybridRealQ_v3 (model-agnostic)
+def permutation_importance_v3(model, X_q, X_c, y, feature_names, n_repeats=3):
+    """Compute permutation importance: AUC drop when each feature is shuffled."""
+    model.eval()
+    with torch.no_grad():
+        baseline_probs = torch.sigmoid(model(X_q, X_c).squeeze()).cpu().numpy()
+    baseline_auc = roc_auc_score(y, baseline_probs)
+    n_q = X_q.shape[1]
+    importances = {}
+    rng = np.random.RandomState(42)
+    for feat_idx, feat_name in enumerate(feature_names):
+        is_quantum = feat_idx < n_q
+        col_idx = feat_idx if is_quantum else feat_idx - n_q
+        drops = []
+        for _ in range(n_repeats):
+            if is_quantum:
+                X_q_perm = X_q.clone()
+                perm = torch.tensor(rng.permutation(len(X_q)), dtype=torch.long)
+                X_q_perm[:, col_idx] = X_q[perm, col_idx]
+                with torch.no_grad():
+                    p = torch.sigmoid(model(X_q_perm, X_c).squeeze()).cpu().numpy()
+            else:
+                X_c_perm = X_c.clone()
+                perm = torch.tensor(rng.permutation(len(X_c)), dtype=torch.long)
+                X_c_perm[:, col_idx] = X_c[perm, col_idx]
+                with torch.no_grad():
+                    p = torch.sigmoid(model(X_q, X_c_perm).squeeze()).cpu().numpy()
+            drops.append(baseline_auc - roc_auc_score(y, p))
+        importances[feat_name] = float(np.mean(drops))
+    return importances, baseline_auc
+
+print("\n  Computing permutation importance for HybridRealQ_v3 (test set, 3 repeats)...")
+v3_perm_start = time.time()
+v3_importance, v3_baseline = permutation_importance_v3(
+    v3_model, X_test_q_sub, X_test_c_sub, y_test_sub.numpy().ravel(),
+    all_feature_names, n_repeats=3)
+print(f"  Done ({time.time() - v3_perm_start:.1f}s, baseline AUC={v3_baseline:.4f})")
+
+# Print comparison table (top 10 by sum across models)
+combined_score = {f: xgb_importance.get(f, 0) + lgbm_importance.get(f, 0) + max(0, v3_importance.get(f, 0))
+                  for f in all_feature_names}
+top_features = sorted(combined_score.keys(), key=lambda f: -combined_score[f])[:15]
+
+print(f"\n  {'Feature':<45} {'XGB':>8} {'LGBM':>8} {'v3 Perm':>10}")
+print("  " + "-" * 72)
+for feat in top_features:
+    quantum_marker = " (Q)" if feat in quantum_features else ""
+    xgb_v = xgb_importance.get(feat, 0)
+    lgbm_v = lgbm_importance.get(feat, 0)
+    v3_v = v3_importance.get(feat, 0)
+    print(f"  {feat + quantum_marker:<45} {xgb_v:>8.4f} {lgbm_v:>8.4f} {v3_v:>10.4f}")
+
+print("\n  (Q) = quantum feature | XGB/LGBM = gain-based | v3 = AUC drop on permutation")
 
 # 10. Fairness Audit
 print("\n" + "=" * 75)
@@ -1088,6 +1160,12 @@ results = {
         'n_classical_features': n_classical,
     },
     'hardware': hybrid_history.get('hardware', {}),
+    'feature_importance': {
+        'xgboost': {k: round(v, 6) for k, v in xgb_importance.items()},
+        'lightgbm': {k: round(v, 6) for k, v in lgbm_importance.items()},
+        'hybrid_v3_permutation': {k: round(v, 6) for k, v in v3_importance.items()},
+        'v3_baseline_auc': round(v3_baseline, 4),
+    },
 }
 
 with open('experiment_results.json', 'w') as f:

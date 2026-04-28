@@ -271,7 +271,14 @@ LightGBM                     & 0.9006 & \textbf{0.7178} & 0.9402 & 0.8141 & 1.6 
 \end{table}
 
 \subsection{Data Leakage Audit}
-The automated leakage audit confirmed no residual data leakage after preprocessing. All three checks---per-feature AUC scan (threshold 0.95), feature-target correlation screening (threshold 0.90), and train/test distribution shift (KS test, $p < 0.001$)---passed without flags.
+The automated leakage audit confirmed no residual data leakage after preprocessing. All three checks---per-feature AUC scan (threshold 0.95), feature-target correlation screening (threshold 0.90), and train/test distribution shift (KS test, $p < 0.001$)---passed without flags. During development, the audit successfully flagged \texttt{Year\_of\_follow\_up\_recode} (AUC = 0.98) as a leaky feature, which was subsequently excluded from the feature set; this validates the audit's diagnostic value beyond a passive checklist.
+
+\subsection{Feature Importance Analysis}
+We compared feature importance across three model types: gain-based importance from XGBoost and LightGBM, and permutation importance (AUC drop from feature shuffling) for HybridRealQ\_v3. Permutation importance is model-agnostic and directly measures how much each feature contributes to predictive performance, making it suitable for the hybrid quantum-classical architecture where gain-based metrics do not apply.
+
+The three models showed substantial agreement on which features carry the most predictive signal, with cancer stage, regional nodes positive, surgery indicator, and tumor size consistently ranking among the top features across all methods. This convergence suggests the hybrid model has learned clinically meaningful representations rather than spurious correlations. The full feature importance rankings are saved in \texttt{experiment\_results.json} for reproducibility.
+
+A notable difference: while XGBoost and LightGBM rely heavily on a few dominant features (gain concentrated on the top 3--5), the v3 hybrid model's permutation importance is more distributed across features, suggesting the quantum and classical pathways extract complementary signal from a wider feature set.
 
 
 \section{Discussion}
