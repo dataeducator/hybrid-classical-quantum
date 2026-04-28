@@ -159,19 +159,19 @@ pip install -r requirements.txt
 python preprocess_tnbc.py    # (preprocess if available)
 
 # 4. Apply race encoding fix (6 categories incl. Non-Hispanic Unknown)
-python fix_race_encoding.py
+python scripts/fix_race_encoding.py
 
-# 5. Run survival experiments (~30-40 min)
-python run_survival_experiments.py    # Cox PH + HybridSurvivalQ v1/v2/v3
-python run_survival_v4.py              # v4 with output scaling
-python run_survival_residual.py        # Cox + Quantum Residual (winner)
+# 5. Run survival experiments (~30-40 min) — invoke from project root
+python experiments/run_survival_experiments.py    # Cox PH + HybridSurvivalQ v1/v2/v3
+python experiments/run_survival_v4.py              # v4 with output scaling
+python experiments/run_survival_residual.py        # Cox + Quantum Residual (winner)
 
 # 6. Run binary baselines (~5 min)
-python run_binary_honest.py
+python experiments/run_binary_honest.py
 
 # 7. Consolidate results into final CSVs
-python consolidate_results.py
-python consolidate_binary.py
+python scripts/consolidate_results.py
+python scripts/consolidate_binary.py
 ```
 
 For full reproduction details (including SEER cohort extraction), see [REPRODUCING.md](REPRODUCING.md).
@@ -187,20 +187,21 @@ For full reproduction details (including SEER cohort extraction), see [REPRODUCI
 ├── DATA_COMPLIANCE.md                     # Data use compliance
 ├── LICENSE.md                             # PolyForm Noncommercial 1.0.0
 ├── requirements.txt                       # Pinned dependencies
-├── *.ipynb                                # Jupyter notebook (51 cells)
 ├── Final_Presentation_Hybrid_QC_TNBC.pptx # 15-slide deck
 │
 ├── paper/
 │   ├── updated_main.tex                   # LaTeX source (20 pages)
 │   └── updated_main.pdf                   # Compiled paper
 │
-├── run_survival_experiments.py            # ENTRY: Cox PH + HybridSurvivalQ v1/v2/v3
-├── run_survival_v4.py                     # ENTRY: v4 (output scaling + pretrain)
-├── run_survival_residual.py               # ENTRY: Cox + Quantum Residual (winner)
-├── run_survival_one.py                    # ENTRY: parallel single-model survival
-├── run_binary_honest.py                   # ENTRY: honest binary baselines
-├── run_binary_one.py                      # ENTRY: parallel single-model binary
-├── run_experiments.py                     # ENTRY: notebook-equivalent script
+├── experiments/                           # all model training entry points
+│   ├── *.ipynb                            # Jupyter notebook (52 cells)
+│   ├── run_survival_experiments.py        # Cox PH + HybridSurvivalQ v1/v2/v3
+│   ├── run_survival_v4.py                 # v4 (output scaling + pretrain)
+│   ├── run_survival_residual.py           # Cox + Quantum Residual (winner)
+│   ├── run_survival_one.py                # parallel single-model survival
+│   ├── run_binary_honest.py               # honest binary baselines
+│   ├── run_binary_one.py                  # parallel single-model binary
+│   └── run_experiments.py                 # notebook-equivalent script
 │
 ├── scripts/                               # helpers (not user entry points)
 │   ├── consolidate_results.py             # Assemble survival results CSV
@@ -240,7 +241,14 @@ For full reproduction details (including SEER cohort extraction), see [REPRODUCI
     └── 7_disparity_analysis/
 ```
 
-**Convention:** all entry-point `run_*.py` scripts live at the project root (run with `python run_*.py`). Helper scripts that postprocess results live in `scripts/`. All generated CSV/JSON output goes to `results/`. The compiled paper lives in `paper/`.
+**Conventions:**
+- All training entry points (notebook + `run_*.py`) live in `experiments/`
+- Helper scripts that postprocess results live in `scripts/`
+- All generated CSV/JSON outputs go to `results/`
+- The compiled paper lives in `paper/`
+- **Always invoke from the project root** so relative paths resolve:
+  `python experiments/run_survival_residual.py` (not `cd experiments && python run_survival_residual.py`)
+- The notebook auto-fixes its working directory if launched from `experiments/`
 
 ---
 
