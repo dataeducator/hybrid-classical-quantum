@@ -1,0 +1,22 @@
+name: tnbc
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - jupyter
+  - notebook
+  - ipykernel
+  - matplotlib
+  - seaborn
+  - pip:
+      - torch==2.10.0
+      - pennylane==0.44.1
+      - pennylane-lightning==0.44.0
+      - xgboost==3.2.0
+      - lightgbm==4.6.0
+      - lifelines==0.30.3
+      - scikit-learn>=1.4
+      - pandas>=2.0
+      - numpy>=1.24
+      - scipy>=1.11

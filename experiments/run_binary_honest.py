@@ -543,9 +543,10 @@ def evaluate_model(model, X_q, X_c, y_np):
     }
 
 
-# 8. Subsample setup for quantum models
-MAX_TRAIN = 2000
-MAX_TEST = 500
+# 8. Subsample setup for quantum models. Bumped 2000/500 -> 5000/1000 after
+# the SEER cohort grew ~2.5x; see note in run_survival_experiments.py.
+MAX_TRAIN = 5000
+MAX_TEST = 1000
 np.random.seed(42)
 if len(X_train_q) > MAX_TRAIN:
     print(f"\nQuantum subsample: {MAX_TRAIN} train, {MAX_TEST} test "

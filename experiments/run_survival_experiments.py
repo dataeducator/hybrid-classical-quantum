@@ -12,6 +12,10 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 os.environ['PYTHONUNBUFFERED'] = '1'
 sys.stdout.reconfigure(line_buffering=True)
 
+RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'results')
+RESULTS_DIR = os.path.normpath(RESULTS_DIR)
+os.makedirs(RESULTS_DIR, exist_ok=True)
+
 import time
 import platform
 import gc
@@ -515,9 +519,13 @@ def evaluate_cox(model, X_q, X_c, durations, events):
     return {'c_index': cidx, 'log_hazards': log_h}
 
 
-# 9. Subsampling for hybrid models (PennyLane is slow per-sample)
-MAX_TRAIN = 2000
-MAX_TEST = 500
+# 9. Subsampling for hybrid models (PennyLane is slow per-sample).
+# Bumped 2000/500 -> 5000/1000 after the SEER cohort grew ~2.5x: at the old
+# threshold the v1/v2/v3 ablation rows were trained on <5% of the cohort,
+# which made the architecture comparison vs the full-data v3/v4/Residual
+# rows misleading.
+MAX_TRAIN = 5000
+MAX_TEST = 1000
 if len(X_train_q) > MAX_TRAIN:
     print(f"\nSubsampling: {MAX_TRAIN} train, {MAX_TEST} test (from {len(X_train_q)}/{len(X_test_q)})")
     np.random.seed(42)
@@ -727,7 +735,7 @@ print("=" * 60)
 ablation_df = pd.DataFrame(ablation)
 print("\nSurvival Analysis Results:")
 print(ablation_df.to_string(index=False))
-ablation_df.to_csv('results/TNBC_Survival_Ablation_Results.csv', index=False)
+ablation_df.to_csv(os.path.join(RESULTS_DIR, 'TNBC_Survival_Ablation_Results.csv'), index=False)
 
 results = {
     'task': 'survival_analysis_cox_ph',
@@ -761,7 +769,7 @@ results = {
     'hardware': log_hardware_info(),
 }
 
-with open('results/survival_results.json', 'w') as f:
+with open(os.path.join(RESULTS_DIR, 'survival_results.json'), 'w') as f:
     json.dump(results, f, indent=2, default=str)
 
 print("\nSaved: TNBC_Survival_Ablation_Results.csv")
